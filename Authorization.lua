@@ -1,5 +1,5 @@
 local authorizedUsers = {
-    "jerfie",
+    "jerfie22",
     "Dangblakkaye",
     "ImGrindingDontWakeMe"
 }
