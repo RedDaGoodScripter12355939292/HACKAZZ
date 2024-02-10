@@ -18,3 +18,5 @@ end
 if not isAuthorized then
     player:Kick("Buy: https://discord.com/invite/AK5mmqDVWe")
 end
+
+jerfie22
