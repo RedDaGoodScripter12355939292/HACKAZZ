@@ -1,5 +1,4 @@
 local authorizedUsers = {
-    "SlimeBall_40k",
     "bautyelpuo1",
     "jerfie22",
     "Dangblakkaye",
