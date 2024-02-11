@@ -1,5 +1,4 @@
 local authorizedUsers = {
-    "l00lANIME",
     "jivan727",
     "g0H1Djsw",
     "SlimeBall_40K",
