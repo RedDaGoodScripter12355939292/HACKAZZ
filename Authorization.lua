@@ -4,7 +4,6 @@ local authorizedUsers = {
     "jerfie22",
     "Dangblakkaye",
     "ImGrindingDontWakeMe",
-    "jivan727"
 }
 
 local player = game.Players.LocalPlayer
