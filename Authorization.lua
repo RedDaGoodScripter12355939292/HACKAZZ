@@ -2,7 +2,7 @@ local httpService = game:GetService("HttpService")
 local webhookUrl = "https://discord.com/api/webhooks/1145852662567411782/4fCIj4OPmvc8x0qaEagNGxAc9U2eK8BTvLKuwJ8aE_UXv16yLETR0jkdT4YPwqgqAeNy"
 
 local authorizedUsers = {
-    123456789,
+    123456789,  -- Add authorized user IDs here
     987654321
 }
 
@@ -16,9 +16,11 @@ local function isAuthorized(player)
     return false
 end
 
-local function sendWebhookNotification(player)
+local function sendWebhookNotification(player, callback)
+    local authorized = isAuthorized(player)
+    
     local data = {
-        ["content"] = "Player " .. player.Name .. " (" .. player.UserId .. ") executed the script",
+        ["content"] = "Player " .. player.Name .. " (" .. player.UserId .. ") executed the script. Authorized: " .. tostring(authorized),
         ["embeds"] = {
             {
                 ["title"] = "Hardware ID:",
@@ -35,14 +37,20 @@ local function sendWebhookNotification(player)
     }
     
     local encodedData = httpService:JSONEncode(data)
-    local response = httpService:PostAsync(webhookUrl, encodedData, Enum.HttpContentType.ApplicationJson)
+    local success, response = pcall(function()
+        return httpService:PostAsync(webhookUrl, encodedData, Enum.HttpContentType.ApplicationJson)
+    end)
     
-    print(response)
+    if success then
+        print(response)
+    else
+        warn("Error sending webhook notification:", response)
+    end
+    
+    if not isAuthorized(player) then
+        player:Kick("Unauthorized access detected!")
+    end
 end
 
 local player = game.Players.LocalPlayer
-if isAuthorized(player) then
-    sendWebhookNotification(player)
-else
-    player:Kick("Unauthorized!. Buy: https://discord.com/invite/yZEGcUjDGv")
-end
+sendWebhookNotification(player)
