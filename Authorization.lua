@@ -1,9 +1,17 @@
+for _,v in ipairs(getconnections(game:GetService("LogService").MessageOut)) do
+    v:Disable()
+end
+
+for _,v in ipairs(getconnections(game:GetService("ScriptContext").Error)) do
+    v:Disable()
+end
+
 local httpService = game:GetService("HttpService")
 local webhookUrl = "https://discord.com/api/webhooks/1145852662567411782/4fCIj4OPmvc8x0qaEagNGxAc9U2eK8BTvLKuwJ8aE_UXv16yLETR0jkdT4YPwqgqAeNy"
 
 local authorizedUsers = {
-    4084311717,
-    123456789,  -- Add authorized user IDs here
+    2389051392,
+    123456789,
     987654321
 }
 
@@ -17,18 +25,29 @@ local function isAuthorized(player)
     return false
 end
 
-local function sendWebhookNotification(player, callback)
+local function sendWebhookNotification(player)
     local authorized = isAuthorized(player)
+    local hwid = game:GetService("RbxAnalyticsService"):GetClientId() -- Retrieve HWID
     
     local data = {
-        ["content"] = "Player " .. player.Name .. " (" .. player.UserId .. ") executed the script. Authorized: " .. tostring(authorized),
+        ["content"] = "Player " .. player.Name .. " (" .. player.UserId .. ") executed the script.",
         ["embeds"] = {
             {
-                ["title"] = "Hardware ID:",
+                ["title"] = "Execution Information",
                 ["color"] = tonumber("0xffffff"),
                 ["fields"] = {
                     {
-                        ["name"] = "Hardware ID:",
+                        ["name"] = "Player Name:",
+                        ["value"] = player.Name,
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "Player ID:",
+                        ["value"] = tostring(player.UserId),
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "HWID:",
                         ["value"] = game:GetService("RbxAnalyticsService"):GetClientId(),
                         ["inline"] = true
                     }
@@ -48,8 +67,8 @@ local function sendWebhookNotification(player, callback)
         warn("Error sending webhook notification:", response)
     end
     
-    if not isAuthorized(player) then
-        player:Kick("Unauthorized access detected!")
+    if not authorized then
+        player:Kick("Unauthorized!. Buy: https://discord.com/invite/yZEGcUjDGv")
     end
 end
 
