@@ -1,14 +1,6 @@
 local authorizedUsers = {
     "caaltaquito5",
-    "jarrodhuy",
-    "timothy_526",
-    "hero42113",
-    "jivan727",
-    "g0H1Djsw",
-    "SlimeBall_40K",
     "jerfie22",
-    "Dangblakkaye",
-    "ImGrindingDontWakeMe",
 }
 
 local player = game.Players.LocalPlayer
