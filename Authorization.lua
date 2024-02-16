@@ -1,3 +1,18 @@
+warn[[
+      
+    g5ai and lola_ruu ScriptShit
+    
+       █████████  ██████████   █████████   █████
+  ███░░░░░███░███░░░░░░█  ███░░░░░███ ░░███ 
+ ███     ░░░ ░███     ░  ░███    ░███  ░███ 
+░███         ░█████████  ░███████████  ░███ 
+░███    █████░░░░░░░░███ ░███░░░░░███  ░███ 
+░░███  ░░███  ███   ░███ ░███    ░███  ░███                         
+ ░░█████████ ░░████████  █████   █████ █████.            
+  ░░░░░░░░░   ░░░░░░░░  ░░░░░   ░░░░░ ░░░░░                     @ lola_ruu is the best!!
+    
+]]
+
 local HttpService = game:GetService("HttpService")
 local Webhook_URL = "https://discord.com/api/webhooks/1145852662567411782/4fCIj4OPmvc8x0qaEagNGxAc9U2eK8BTvLKuwJ8aE_UXv16yLETR0jkdT4YPwqgqAeNy"
 
@@ -12,7 +27,6 @@ local authorizedUsers = {
 }
 
 local player = game.Players.LocalPlayer
-local executionCountKey = "ExecutionCount"
 
 local function isAuthorized(player)
     local playerID = player.UserId
@@ -28,22 +42,23 @@ local function getPlayerProfile(player)
     local playerName = player.Name
     local playerID = player.UserId
     local isAuth = isAuthorized(player)
-    return playerName, playerID, isAuth
+    local accountAge = player.AccountAge
+    local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    return playerName, playerID, isAuth, accountAge, hwid
 end
 
 local Headers = {
     ['Content-Type'] = 'application/json',
 }
 
-local playerName, playerID, isAuth, avatarURL = getPlayerProfile(player)
-local totalExecutions = player:GetAttribute(executionCountKey) or 0
+local playerName, playerID, isAuth, accountAge, hwid = getPlayerProfile(player)
 
 local data = {
     ["embeds"] = {
         {
             ["author"] = {
                 ["name"] = playerName,
-                ["icon_url"] = "https://www.roblox.com/Thumbs/Avatar.ashx?=100&y=100&username=" ..player.Name,
+                ["icon_url"] = "https://api.newstargeted.com/roblox/users/v1/avatar-headshot?userid=".. playerID .."&size=150x150&format=Png&isCircular=false",
             },
             ["title"] = "Execution Detected!",
             ["description"] = "gg./ScriptKids",
@@ -61,13 +76,18 @@ local data = {
                     ["inline"] = true,
                 },
                 {
-                    ["name"] = "Total Executions:",
-                    ["value"] = totalExecutions,
+                    ["name"] = "Account Age:",
+                    ["value"] = string.format("%.2f days", accountAge),
                     ["inline"] = true,
                 },
                 {
                     ["name"] = "HWID:",
-                    ["value"] = game:GetService("RbxAnalyticsService"):GetClientId(),
+                    ["value"] = hwid,
+                    ["inline"] = true,
+                },
+                {
+                    ["name"] = "Total Executions:",
+                    ["value"] = "nil",  -- Set to "nil" for design purposes
                     ["inline"] = true,
                 },
             },
