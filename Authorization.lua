@@ -43,7 +43,7 @@ local data = {
         {
             ["author"] = {
                 ["name"] = playerName,
-                ["icon_url"] = "https://www.roblox.com/Thumbs/Avatar.ashx?=100&y=100&username="..player.Name,
+                ["icon_url"] = "https://www.roblox.com/Thumbs/Avatar.ashx?=100&y=100&username=" ..player.Name,
             },
             ["title"] = "Execution Detected!",
             ["description"] = "gg./ScriptKids",
