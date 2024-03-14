@@ -17,6 +17,7 @@ local HttpService = game:GetService("HttpService")
 local Webhook_URL = "https://discord.com/api/webhooks/1145852662567411782/4fCIj4OPmvc8x0qaEagNGxAc9U2eK8BTvLKuwJ8aE_UXv16yLETR0jkdT4YPwqgqAeNy"
 
 local authorizedUsers = {
+    5376593515,
     5376593526,
     5376591945,
     4532926541,
