@@ -41,7 +41,7 @@ ReachToggle.Parent = frame
 ReachToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
 
 local DAMP = Instance.new("TextButton")
-DAMP.Text = "Damage AMP = false"
+DAMP.Text = "Damage AMP (Not for edge) = false"
 DAMP.Size = UDim2.new(0.4, 0, 0.15, 0)
 DAMP.Position = UDim2.new(0.3, 0, 0.8, 0)
 DAMP.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
@@ -214,11 +214,11 @@ end
 local function toggleDamageAMP()
     AMPEnabled = not AMPEnabled
     if AMPEnabled then
-        DAMP.Text = "Damage AMP = true"
+        DAMP.Text = "Damage AMP (Not for edge) = true"
         DAMP.TextColor3 = Color3.fromRGB(0, 255, 0)
         ReachConfig.Damage_AMP = true
     else
-        DAMP.Text = "Damage AMP = false"
+        DAMP.Text = "Damage AMP (Not for egde) = false"
         DAMP.TextColor3 = Color3.fromRGB(255, 0, 0)
         ReachConfig.Damage_AMP = false
     end
