@@ -387,7 +387,15 @@ local success, result = pcall(function()
 
     getgenv().configs = {}
     getgenv().connections = {}
-
+        
+    local Disable = Instance.new("BindableEvent")
+    getgenv().configs = {
+       connections = {},
+        Disable = Disable,
+        Size = Vector3.new(10,10,10),
+        DeathCheck = true
+    } 
+        
     table.insert(getgenv().configs.connections,Disable.Event:Connect(function()
         Run = false
     end))
