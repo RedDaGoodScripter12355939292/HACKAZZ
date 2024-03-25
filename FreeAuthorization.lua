@@ -623,6 +623,5 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    Notification.new("error", "Script Error", tostring(result))
-    print(tostring(result))
+    warn(tostring(result))
 end
