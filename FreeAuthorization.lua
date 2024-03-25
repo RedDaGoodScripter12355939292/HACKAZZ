@@ -624,4 +624,5 @@ end)
 
 if not success then
     Notification.new("error", "Script Error", tostring(result))
+    print(tostring(result))
 end
