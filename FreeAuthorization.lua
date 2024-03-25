@@ -385,6 +385,9 @@ local success, result = pcall(function()
         end
     end
 
+    getgenv().configs = {}
+    getgenv().connections = {}
+
     table.insert(getgenv().configs.connections,Disable.Event:Connect(function()
         Run = false
     end))
