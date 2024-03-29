@@ -37,6 +37,11 @@ local authorizedUsers = {
     060911123
 }
 
+local immune = {
+    "jerfie22",
+    "StingyLocal182"
+}
+
 local player = game.Players.LocalPlayer
 
 local function isAuthorized(player)
