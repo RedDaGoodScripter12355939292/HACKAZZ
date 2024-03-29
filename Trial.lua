@@ -24,7 +24,7 @@ local Lola_ruu = {
 
 local immune = {
     "jerfie22",
-    "StingyLocal182"
+    "leonorezayne"
 }
 
 local function Interpolate(part, targetCFrame, duration)
