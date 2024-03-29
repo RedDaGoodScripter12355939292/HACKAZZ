@@ -228,7 +228,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
             end
         end
     end)
-    if not d then warn("Something went wrong!") end
+    if not d then warn(ebug) end
 end)
 
 G5AI["HandleVisualizer"] = function(Handle)
