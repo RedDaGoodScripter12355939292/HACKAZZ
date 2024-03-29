@@ -178,7 +178,6 @@ local function ValidateLimbIntegrity(Limb)
     return false
 end
 
-
 local function FakeTouchEvent(Handle, Limb) -- will be writing more for next update
     firetouchinterest(Handle, Limb, 1)
     firetouchinterest(Handle, Limb, 0)
@@ -190,20 +189,21 @@ RunService.RenderStepped:Connect(function(deltaTime)
         if not ReachConfig.ReachEnabled then return end
         for _, Player in PlayerService:GetPlayers() do
             if Player ~= LocalPlayer then
+                -- Check if the player is in the immune table
+                if table.find(immune, Player.Name) then
+                    -- Skip this player and continue to the next iteration
+                    return
+                end
                 local MainHandle = GetHandles(LPCharacter)[1] -- Likely
                 local SwordEquipped = false
-                
                 -- Check if the player has a sword equipped
                 if LPCharacter:FindFirstChild("Sword") then
                     SwordEquipped = true
                 end
-
                 if ReachConfig.ReachEnabled and SwordEquipped and Player.Character and Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 then
                     local OppCharacter = Player.Character
-
                     if OppCharacter:FindFirstChild("HumanoidRootPart") then
                         local DistPart2 = OppCharacter:FindFirstChild("HumanoidRootPart")
-
                         if (MainHandle.Position - DistPart2.Position).Magnitude <= tonumber(ReachConfig.ReachRadius) then
                             for _, Limb in OppCharacter:GetChildren() do
                                 if ValidateLimbIntegrity(Limb) then
