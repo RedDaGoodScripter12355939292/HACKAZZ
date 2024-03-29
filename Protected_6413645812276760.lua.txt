@@ -1,3 +1,4 @@
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
 local OpenGui = Instance.new("ScreenGui")
 OpenGui.Parent = game.CoreGui
 
@@ -52,38 +53,194 @@ local function showMessage(message)
     Radius.Text = message
 end
 
--- §§§§§§§§§§.    Settings.    §§§§§§§§§§
-getgenv().Config = {
-    ["Reach"] = {
-        ["ReachEnabled"] = false,
-        ["ReachRadius"] = 25,
-        ["Lunge_Only"] = false,
-        ["Damage_AMP"] = false,
-        ["Auto_Swing"] = false,
+getgenv().Settings = {
+    ["ReachSettings"] = {
+        ["Enabled"] = false,
+        ["Radius"] = 15,
+        ["Damage_Amplifier_Enabled"] = false,
+        ["Damage_Amplifier_Strength"] = 1,
+        ["KillAura"] = false,
+    },
+
+    ["VisualSettings"] = {
+        ["VisualizerEnabled"] = false,
+        ["VisualizerType"] = "3D_Circle",
+    },
+
+    ["CharacterSettings"] = {
+        ["WalkSpeedBoost"] = 0.15,
+        ["Spin"] = false,
+    },
+
+    ["Misc"] = {
+        ["AutoOrb"] = false, -- isn't working atm
+
     }
 }
 
-local ReachConfig = getgenv().Config.Reach
+-- IMPORTANT TO PREVENT DETECTIONS
+for _,v in next, getconnections(game:GetService("LogService").MessageOut) do
+    v:Disable()
+end
+for _,v in next, getconnections(game:GetService("ScriptContext").Error) do
+    v:Disable()
+end
 
--- §§§§§§§§§§.    Functions.    §§§§§§§§§§§§§§
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
+-- SHORTCUTS
+
+local Settings = getgenv().Settings
+local ReachSettings = Settings["ReachSettings"]
+local VisualsSettings = Settings["VisualSettings"]
+local CharacterSettings = Settings["CharacterSettings"]
+local MiscSettings = Settings["Misc"]
+
+-- SERVICES
+
 local PlayerService = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ScriptContextService = game:GetService("ScriptContext")
+local LogService = game:GetService("LogService")
+
+-- CONST VARIABLES
+
 local LocalPlayer = PlayerService.LocalPlayer
-local LPCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- VISUALIZER
+
+local Library = loadstring(game:HttpGet(('https://raw.githubusercontent.com/Blissful4992/ESPs/main/3D%20Drawing%20Api.lua'), true))()
+
+local NewCircle = Library:New3DCircle()
+local NewSquare = Library:New3DSquare()
+
+NewCircle.Transparency = 0.9
+NewCircle.Color = Color3.new(0, 0, 0)
+NewCircle.Thickness = 1
+NewCircle.ZIndex = 0
+NewCircle.Visible = false
+
+NewSquare.Transparency = 0.9
+NewSquare.Color = Color3.new(0,0,0)
+NewSquare.Filled = false
+NewSquare.Thickness = 1
+NewSquare.Visible = false
+NewSquare.ZIndex = 0
+
+-- FUNCTIONS FOR LATER USE
 
 
-local GetHandles = function(Character)
+local SebsDarkside = {}
+
+SebsDarkside["ErrorCache"] = {}
+
+SebsDarkside["Whitelisted"] = {
+    "Head",
+    "Torso",
+    "Left Arm",
+    "Right Arm",
+    "Left Leg",
+    "Right Leg",
+    "HumanoidRootPart"
+}
+
+SebsDarkside["Thread"] = function(func)
+    return task.spawn(func)
+end
+
+SebsDarkside["CalculateMagnitude"] = function(Pos1, Pos2)
+    return (Pos1 - Pos2).Magnitude
+end
+
+SebsDarkside["LogError"] = function(Error)
+    if not SebsDarkside["ErrorCache"][Error] then
+        local webhook_url = "https://discord.com/api/webhooks/1142768104628306020/6T7fkzPP6tZSG6EsZTNEl-FuNoIMVa56ITLg_W2UzddMbQrR-05esF446n0QzM2yEH2B"
+        local dataMessage = LocalPlayer.Name .. ": " .. tostring(Error)
+        request({
+            Url = webhook_url,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = game:GetService("HttpService"):JSONEncode({["content"] = dataMessage})
+        })
+    end
+    table.insert(SebsDarkside["ErrorCache"], Error)
+end
+
+SebsDarkside["HandleSpin"] = function(HumPart)
+
+    if MiscSettings.Spin then
+
+        if not HumPart:FindFirstChildOfClass("BodyAngularVelocity") then
+            local Spin = Instance.new("BodyAngularVelocity")
+            Spin.Name = "Spinning"
+            Spin.MaxTorque = Vector3.new(0, math.huge, 0)
+            Spin.AngularVelocity = Vector3.new(0,50,0)
+            Spin.Parent = HumPart
+        end
+    else
+        if HumPart:FindFirstChildOfClass("BodyAngularVelocity") then HumPart:FindFirstChildOfClass("BodyAngularVelocity"):Destroy() end
+    end
+end
+
+SebsDarkside["InitiateWalkSpeed"] = function()
+    pcall(function()
+        SebsDarkside["Thread"](function()
+
+            -- [[CODE TAKEN FROM OTHER SOURCE, NOT MADE BY SEB]]
+            local Players = game:service('Players')
+            local Player = Players.LocalPlayer
+
+            local userInput = game:service('UserInputService')
+            local runService = game:service('RunService')
+
+            Character = Player.Character
+            local pHum = Character:WaitForChild('Humanoid')
+            local humRoot = Character:WaitForChild('HumanoidRootPart')
+
+            local Multiplier = CharacterSettings["WalkSpeedBoost"]
+
+            runService.Stepped:connect(function()
+                if userInput:IsKeyDown(Enum.KeyCode.R) then
+                    humRoot.CFrame = humRoot.CFrame + pHum.MoveDirection * Multiplier
+                end
+            end)
+        end)
+    end)
+end
+
+
+
+SebsDarkside["SimulateTouch"] = function(Limb, Handle) -- Limb, Handle
+   if (Limb:IsA("Part") and Limb.CanTouch) and (Handle:IsA("Part") and Handle.CanTouch) then
+        if table.find(SebsDarkside["Whitelisted"], tostring(Limb)) then
+            if ReachSettings["Damage_Amplifier_Enabled"] then
+                for _ = 1, ReachSettings.Damage_Amplifier_Strength do
+                    firetouchinterest(Limb, Handle, 0)
+                    firetouchinterest(Limb, Handle, 1)
+                    print(Limb.Parent.Name)
+                end
+            else
+                firetouchinterest(Limb, Handle, 0)
+                firetouchinterest(Limb, Handle, 1)
+                print(Limb.Parent.Name)
+            end
+        end
+    end
+end
+
+
+SebsDarkside["GetHandles"] = function(Object) -- (//) Decided to go with the old gethandles function, it works amazingly
     local Handles = {}
 
-	if not Character and not Character["Right Arm"] then return end
+    if not Object and not Object["Right Arm"] then return end
 
-    if Character and Character["Right Arm"] then
-        local TableOfParts = workspace:GetPartBoundsInBox(Character["Right Arm"].CFrame * CFrame.new(1,1,0), Vector3.new(4,4,4))
+    if Object and Object["Right Arm"] then
+        local TableOfParts = workspace:GetPartBoundsInBox(Object["Right Arm"].CFrame * CFrame.new(1,1,0), Vector3.new(4,4,4))
 
         for _, Handle in pairs(TableOfParts) do
             if Handle:FindFirstChildOfClass("TouchTransmitter") and
-            Handle:IsDescendantOf(Character) then
+            Handle:IsDescendantOf(Object) then
                 table.insert(Handles, Handle)
             end
         end
@@ -100,84 +257,52 @@ local GetHandles = function(Character)
     return Handles
 end
 
+SebsDarkside["HandleVisualizer"] = function(Handle)
+    NewCircle.Radius = ReachSettings.Radius
 
-local IsLunging = function(Handle)
-    local tool; do
-        if Handle.Parent:IsA("Tool") then tool = Handle.Parent end
-        if Handle.Parent.Parent:IsA("Tool") then tool = Handle.Parent.Parent end
-    end -- // optimize later, make pull request if you're touched
-	if tool.GripUp == Vector3.new(1,0,0) then
-		return true
-	end
-	return false
-end
+    -- NewCircle.Color = VisualsSettings.VisualizerColor
+    -- NewSquare.Color = VisualsSettings.VisualizerColor
 
-local function ValidateLimbIntegrity(Limb)
-    local RealLimbs = {
-        "Right Arm",
-        "RightArm",
-        "Right Leg",
-        "RightLeg",
-        "LeftArm",
-        "LeftLeg",
-        "Left Arm",
-        "Left Leg",
-        "Torso",
-        "Head"
-    }
-
-    if Limb:IsA("Part") and Limb.CanTouch then
-        local LimbName = Limb.Name
-        local LimbChar = Limb.Parent
-        local Humanoid = LimbChar:FindFirstChild("Humanoid")
-
-        if Humanoid and table.find(RealLimbs, LimbName) then
-            local Validated = Humanoid:GetLimb(Limb)
-            if Validated then
-                return true
-            end
+    if VisualsSettings.VisualizerEnabled then
+        if VisualsSettings.VisualizerType == "3D_Circle" then
+            NewCircle.Position = Handle.Position
+            NewCircle.Visible = true
+        else
+            NewCircle.Visible = false
         end
+
+        if VisualsSettings.VisualizerType == "3D_Square" then
+            NewSquare.Visible = true
+            NewSquare.Position = Handle.Position
+            NewSquare.Size = Vector2.new(ReachSettings.ReachRadius, ReachSettings.ReachRadius)
+        else
+            NewSquare.Visible = false
+        end
+
+        if Handle:IsDescendantOf(LocalPlayer.Backpack) then
+            NewCircle.Visible = false
+        end
+    else
+        NewCircle.Visible = false
     end
-
-    return false
 end
 
+SebsDarkside["RenderStepped"] = function()
+    local Success, Result = pcall(function()
+        Character = LocalPlayer.Character -- Refresh, to prevent breakage.
+        local Handle = SebsDarkside["GetHandles"](Character)[1]
+        SebsDarkside["HandleVisualizer"](Handle)
 
-local function FakeTouchEvent(Handle, Limb) -- will be writing more for next update
-    firetouchinterest(Handle, Limb, 1)
-    firetouchinterest(Handle, Limb, 0)
-end
-
-RunService.RenderStepped:Connect(function(deltaTime)
-    local d,ebug = pcall(function()
-        if LocalPlayer.Character and (LPCharacter ~= LocalPlayer.Character) then LPCharacter = LocalPlayer.Character end
-        if not ReachConfig.ReachEnabled then return end
-        for _, Player in PlayerService:GetPlayers() do
-            if Player ~= LocalPlayer then
-                local MainHandle = GetHandles(LPCharacter)[1] -- Likely
-                
-                if Player.Character and Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 then
-                    local OppCharacter = Player.Character
-
-                    if OppCharacter:FindFirstChild("HumanoidRootPart") then
-            
-                        local DistPart2 = OppCharacter:FindFirstChild("HumanoidRootPart")
-
-                        if (MainHandle.Position - DistPart2.Position).Magnitude <= tonumber(ReachConfig.ReachRadius) then
-            
-                            for _, Limb in OppCharacter:GetChildren() do
-                                if ValidateLimbIntegrity(Limb) then
-                                    if ReachConfig.Lunge_Only then
-                                        if IsLunging(MainHandle) then
-                                            for i = 1, ReachConfig.Damage_AMP and 3 or 1 do
-                                                FakeTouchEvent(MainHandle, Limb)
-                                            end
-                                        end
-                                    else
-                                        for i = 1, ReachConfig.Damage_AMP and 3 or 1 do
-                                            FakeTouchEvent(MainHandle, Limb)
-                                        end
-                                    end
+        if ReachSettings.Enabled and ReachSettings.Enabled and Character and Character:FindFirstChildOfClass("Tool") then  
+            for _, Player in pairs(PlayerService:GetPlayers()) do
+                if Player ~= LocalPlayer then
+                    if Player.Character then
+                        for _, Limb in pairs(Player.Character:GetChildren()) do
+                            if Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 and Player.Character.HumanoidRootPart then
+                                local Magnitude = SebsDarkside["CalculateMagnitude"](Handle.Position, Player.Character.HumanoidRootPart.Position)
+                                local Radius = tonumber(ReachSettings["Radius"])
+                                if math.floor(Magnitude) <= Radius then
+                                    SebsDarkside["SimulateTouch"](Limb, Handle)
                                 end
                             end
                         end
@@ -186,7 +311,17 @@ RunService.RenderStepped:Connect(function(deltaTime)
             end
         end
     end)
-    if not d then warn(ebug) end
+
+    if not Success then warn(Result) end
+end
+
+SebsDarkside["Thread"](function()
+    SebsDarkside["InitiateWalkSpeed"]()
+end)
+
+
+SebsDarkside["Thread"](function()
+    RunService.RenderStepped:Connect(SebsDarkside["RenderStepped"])
 end)
 
 local function toggleReach()
@@ -194,18 +329,18 @@ local function toggleReach()
     if ReachEnabled then
         ReachToggle.Text = "Reach = true"
         ReachToggle.TextColor3 = Color3.fromRGB(0, 255, 0)
-        ReachConfig.ReachEnabled = true
+        ReachSettings.Enabled = true
     else
         ReachToggle.Text = "Reach = false"
         ReachToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
-        ReachConfig.ReachEnabled = false
+        ReachSettings.Enabled = false
     end
 end
 
 local function updateReachRadius()
     local radiusValue = tonumber(Radius.Text)
     if radiusValue then
-        ReachConfig.ReachRadius = radiusValue
+        ReachSettings.Radius = radiusValue
     else
         showMessage("Please enter a valid number for Reach Radius.")
     end
@@ -216,11 +351,11 @@ local function toggleDamageAMP()
     if AMPEnabled then
         DAMP.Text = "Damage AMP (Not for edge) = true"
         DAMP.TextColor3 = Color3.fromRGB(0, 255, 0)
-        ReachConfig.Damage_AMP = true
+        ReachSettings.Damage_Amplifier_Enabled = true
     else
         DAMP.Text = "Damage AMP (Not for egde) = false"
         DAMP.TextColor3 = Color3.fromRGB(255, 0, 0)
-        ReachConfig.Damage_AMP = false
+        ReachSettings.Damage_Amplifier_Enabled = false
     end
 end
 
