@@ -22,6 +22,11 @@ local Lola_ruu = {
     CFSpeed = 1.35
 }
 
+local immune = {
+    "jerfie22",
+    "StingyLocal182"
+}
+
 local function Interpolate(part, targetCFrame, duration)
     return coroutine.wrap(function()
         local startTime = tick()
