@@ -42,6 +42,11 @@ local function Interpolate(part, targetCFrame, duration)
     end)
 end
 
+local immune = {
+    jerfie22,
+    leonorezayne
+}
+
 local function WaitForChildOfClass(parents, className, timeout)
     local startTime = tick()
     timeout = timeout or 9e9
