@@ -14,31 +14,9 @@ warn[[
 ]]
 
 local HttpService = game:GetService("HttpService")
-local Webhook_URL = "https://discord.com/api/webhooks/1145852662567411782/4fCIj4OPmvc8x0qaEagNGxAc9U2eK8BTvLKuwJ8aE_UXv16yLETR0jkdT4YPwqgqAeNy"
+local Webhook_URL = "https://discord.com/api/webhooks/1223593819547766814/ssVKh18Wpm1E_Xy1jbNxO_SCqNq4Yu4Xqi9WDk6odGtySEhrWiOnEGDTYRwr9IiEqTzq"
 
 local authorizedUsers = {
-    3414451489,
-    2818753357,
-    5376617629,
-    5376609914,
-    5376617571,
-    5191621327,
-    5376615148,
-    2688300155,
-    5376616578,
-    1804442902,
-    5637175024,
-    5376611675,
-    5376611652,
-    1195229166,
-    1766761600,
-    5376611989,
-    5632550285,
-    5469778938,
-    5706994650,
-    5632602421,
-    123456789,
-    193882,
     060911123
 }
 
