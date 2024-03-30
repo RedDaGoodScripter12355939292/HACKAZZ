@@ -22,11 +22,6 @@ local Lola_ruu = {
     CFSpeed = 1.35
 }
 
-local immune = {
-    "jerfie22",
-    "leonorezayne"
-}
-
 local function Interpolate(part, targetCFrame, duration)
     return coroutine.wrap(function()
         local startTime = tick()
@@ -192,48 +187,49 @@ RunService.RenderStepped:Connect(function(deltaTime)
     local d, ebug = pcall(function()
         if LocalPlayer.Character and (LPCharacter ~= LocalPlayer.Character) then LPCharacter = LocalPlayer.Character end
         if not ReachConfig.ReachEnabled then return end
-        for _, Player in PlayerService:GetPlayers() do
+        for _, Player in ipairs(PlayerService:GetPlayers()) do
             if Player ~= LocalPlayer then
                 -- Check if the player is in the immune table
-                if table.find(immune, Player.Name) then
-                    -- Skip this player and continue to the next iteration
-                    return
-                end
-                local MainHandle = GetHandles(LPCharacter)[1] -- Likely
-                local SwordEquipped = false
-                -- Check if the player has a sword equipped
-                if LPCharacter:FindFirstChild("Sword") then
-                    SwordEquipped = true
-                end
-                if ReachConfig.ReachEnabled and SwordEquipped and Player.Character and Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 then
-                    local OppCharacter = Player.Character
-                    if OppCharacter:FindFirstChild("HumanoidRootPart") then
-                        local DistPart2 = OppCharacter:FindFirstChild("HumanoidRootPart")
-                        if (MainHandle.Position - DistPart2.Position).Magnitude <= tonumber(ReachConfig.ReachRadius) then
-                            for _, Limb in OppCharacter:GetChildren() do
-                                if ValidateLimbIntegrity(Limb) then
-                                    if ReachConfig.Lunge_Only then
-                                        if IsLunging(MainHandle) then
+                if not table.find(immune, Player.Name) then
+                    -- Other actions intended for non-immune players
+                    local MainHandle = GetHandles(LPCharacter)[1] -- Likely
+                    local SwordEquipped = false
+                    -- Check if the player has a sword equipped
+                    if LPCharacter:FindFirstChild("Sword") then
+                        SwordEquipped = true
+                    end
+                    if ReachConfig.ReachEnabled and SwordEquipped and Player.Character and Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 then
+                        local OppCharacter = Player.Character
+                        if OppCharacter:FindFirstChild("HumanoidRootPart") then
+                            local DistPart2 = OppCharacter:FindFirstChild("HumanoidRootPart")
+                            if (MainHandle.Position - DistPart2.Position).Magnitude <= tonumber(ReachConfig.ReachRadius) then
+                                for _, Limb in OppCharacter:GetChildren() do
+                                    if ValidateLimbIntegrity(Limb) then
+                                        if ReachConfig.Lunge_Only then
+                                            if IsLunging(MainHandle) then
+                                                for i = 1, ReachConfig.Damage_AMP and 3 or 1 do
+                                                    FakeTouchEvent(MainHandle, Limb)
+                                                end
+                                                G5AI["HandleVisualizer"](MainHandle)
+                                            end
+                                        else
                                             for i = 1, ReachConfig.Damage_AMP and 3 or 1 do
                                                 FakeTouchEvent(MainHandle, Limb)
                                             end
                                             G5AI["HandleVisualizer"](MainHandle)
                                         end
-                                    else
-                                        for i = 1, ReachConfig.Damage_AMP and 3 or 1 do
-                                            FakeTouchEvent(MainHandle, Limb)
-                                        end
-                                        G5AI["HandleVisualizer"](MainHandle)
                                     end
                                 end
                             end
                         end
                     end
+                else
+                    print("Attempted action on immune player:", Player.Name)
                 end
             end
         end
     end)
-    if not d then warn(ebug) end
+    if not d then warn("Something wrong wrong!") end
 end)
 
 G5AI["HandleVisualizer"] = function(Handle)
