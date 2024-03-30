@@ -184,17 +184,15 @@ local function FakeTouchEvent(Handle, Limb) -- will be writing more for next upd
 end
 
 RunService.RenderStepped:Connect(function(deltaTime)
-    local d, ebug = pcall(function()
+    local success, error = pcall(function()
         if LocalPlayer.Character and (LPCharacter ~= LocalPlayer.Character) then LPCharacter = LocalPlayer.Character end
         if not ReachConfig.ReachEnabled then return end
         for _, Player in ipairs(PlayerService:GetPlayers()) do
             if Player ~= LocalPlayer then
-                -- Check if the player is in the immune table
                 if not table.find(immune, Player.Name) then
                     -- Other actions intended for non-immune players
                     local MainHandle = GetHandles(LPCharacter)[1] -- Likely
                     local SwordEquipped = false
-                    -- Check if the player has a sword equipped
                     if LPCharacter:FindFirstChild("Sword") then
                         SwordEquipped = true
                     end
@@ -229,7 +227,9 @@ RunService.RenderStepped:Connect(function(deltaTime)
             end
         end
     end)
-    if not d then warn("Something wrong wrong!") end
+    if not success then
+        warn("Error occurred:", error)
+    end
 end)
 
 G5AI["HandleVisualizer"] = function(Handle)
