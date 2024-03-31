@@ -54,7 +54,7 @@ local function showMessage(message)
 end
 
 getgenv().Settings = {
-    ["ReachSettings"] = {
+    ["ReachSetting"] = {
         ["Enabled"] = false,
         ["Radius"] = 15,
         ["Damage_Amplifier_Enabled"] = false,
@@ -89,7 +89,7 @@ end
 -- SHORTCUTS
 
 local Settings = getgenv().Settings
-local ReachSettings = Settings["ReachSettings"]
+local ReachSettings = Settings["ReachSetting"]
 local VisualsSettings = Settings["VisualSettings"]
 local CharacterSettings = Settings["CharacterSettings"]
 local MiscSettings = Settings["Misc"]
@@ -312,7 +312,7 @@ SebsDarkside["RenderStepped"] = function()
         end
     end)
 
-    if not Success then warn(Result) end
+    if not Success then warn("Something went wrong!") end
 end
 
 SebsDarkside["Thread"](function()
