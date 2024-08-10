@@ -49,9 +49,9 @@ local function getPlayerProfile(player)
     local playerName = player.Name
     local playerID = player.UserId
     local isAuth = isAuthorized(player)
-    local executor = identifyexecutor()
+    local executor = identifyexecutor() or "Unknown"
     local accountAge = player.AccountAge
-    local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    local hwid = game:GetService("RbxAnalyticsService"):GetClientId() or "Unknown"
     return playerName, playerID, isAuth, executor, accountAge, hwid
 end
 
@@ -111,7 +111,11 @@ local data = {
 local PlayerData = HttpService:JSONEncode(data)
 
 local Request = http_request or request or HttpPost or syn.request
-Request({Url = Webhook_URL, Body = PlayerData, Method = "POST", Headers = Headers})
+if Request then
+    Request({Url = Webhook_URL, Body = PlayerData, Method = "POST", Headers = Headers})
+else
+    warn("No supported HTTP request function found.")
+end
 
 local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
 if isAuth then
