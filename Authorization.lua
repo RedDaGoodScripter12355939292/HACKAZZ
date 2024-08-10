@@ -49,7 +49,6 @@ local function getPlayerProfile(player)
     local playerName = player.Name
     local playerID = player.UserId
     local isAuth = isAuthorized(player)
-    local executor = identifyexecutor() or "Unknown"
     local accountAge = player.AccountAge
     local hwid = game:GetService("RbxAnalyticsService"):GetClientId() or "Unknown"
     return playerName, playerID, isAuth, executor, accountAge, hwid
@@ -81,11 +80,6 @@ local data = {
                 {
                     ["name"] = "isAuthorized:",
                     ["value"] = tostring(isAuth),
-                    ["inline"] = true,
-                },
-                {
-                    ["name"] = "Executor:",
-                    ["value"] = executor,
                     ["inline"] = true,
                 },
                 {
