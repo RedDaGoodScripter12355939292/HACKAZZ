@@ -459,27 +459,33 @@ local success, result = pcall(function()
     local mouse = localPlayer:GetMouse()
 
     local function getClosestPlayer()
-        local closestPlayer = nil
-        local shortestDistance = math.huge
-        for i, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v.Name ~= localPlayer.Name then
-                if v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") then
-                    if not v.Character:FindFirstChildOfClass("ForceField") then
-                        local ray = Ray.new(v.Character:FindFirstChild("HumanoidRootPart").Position, Vector3.new(0,-100000,0))
-                        local Hit = game:GetService("Workspace"):FindPartOnRay(ray, v.Character)
-                        if Hit then
-                            local magnitude = (v.Character.HumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).magnitude
-                            if magnitude < shortestDistance then
-                                closestPlayer = v
-                                shortestDistance = magnitude
-                            end
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+        if v.Name ~= localPlayer.Name then
+            if v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") then
+                if not v.Character:FindFirstChildOfClass("ForceField") then
+                    local startPos = v.Character.HumanoidRootPart.Position
+                    local endPos = startPos + Vector3.new(0, -100000, 0)
+                    local ray = Ray.new(startPos, endPos - startPos)
+                    local Hit = game:GetService("Workspace"):FindPartOnRay(ray, v.Character)
+                    if Hit then
+                        local magnitude = (v.Character.HumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).magnitude
+                        if magnitude < shortestDistance then
+                            closestPlayer = v
+                            shortestDistance = magnitude
                         end
+                    else
+                        print(v.Name .. " did not hit anything with the ray.")
                     end
                 end
+            else
+                print(v.Name .. " does not meet all conditions.")
             end
         end
-        return closestPlayer
     end
+    return closestPlayer
+        end
     print("g")
     local stateType = Enum.HumanoidStateType
     local character = game.Players.LocalPlayer.Character
