@@ -454,62 +454,7 @@ local success, result = pcall(function()
         end
     end)
     print("f")
-    local localPlayer = game:GetService("Players").LocalPlayer
-    local currentCamera = game:GetService("Workspace").CurrentCamera
-    local mouse = localPlayer:GetMouse()
-
-    local function getClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    for i, v in pairs(game:GetService("Players"):GetPlayers()) do
-        if v.Name ~= localPlayer.Name then
-            if v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") then
-                if not v.Character:FindFirstChildOfClass("ForceField") then
-                    local startPos = v.Character.HumanoidRootPart.Position
-                    local endPos = startPos + Vector3.new(0, -100000, 0)
-                    local ray = Ray.new(startPos, endPos - startPos)
-                    local Hit = game:GetService("Workspace"):FindPartOnRay(ray, v.Character)
-                    if Hit then
-                        local magnitude = (v.Character.HumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).magnitude
-                        if magnitude < shortestDistance then
-                            closestPlayer = v
-                            shortestDistance = magnitude
-                        end
-                    else
-                        print(v.Name .. " did not hit anything with the ray.")
-                    end
-                end
-            else
-                print(v.Name .. " does not meet all conditions.")
-            end
-        end
-    end
-    return closestPlayer
-        end
-    print("g")
-    local stateType = Enum.HumanoidStateType
-    local character = game.Players.LocalPlayer.Character
-    local humanoid = character:WaitForChild("Humanoid")
-
-    humanoid:SetStateEnabled(stateType.FallingDown, false)
-    humanoid:SetStateEnabled(stateType.Ragdoll, false)
-
-    while true do
-        wait()
-        spawn(function()
-            local nigger = getClosestPlayer()
-            if game:GetService("Players").LocalPlayer.Character.PrimaryPart and getClosestPlayer() ~= nil and i_said_right_foot_creep then
-                local TargetPart = getClosestPlayer().Character.HumanoidRootPart
-                local Part = game.Players.LocalPlayer.Character.HumanoidRootPart
-                local RotateX, RotateY, RotateZ = 0, 0, 0
-                Part.CFrame = CFrame.new(Part.Position, TargetPart.Position) * CFrame.Angles(math.rad(0), math.rad(25), math.rad(0))
-                game:GetService("Players").LocalPlayer.Character.Humanoid:MoveTo(getClosestPlayer().Character.HumanoidRootPart.CFrame * Vector3.new(-3, 0, 0))
-                if getClosestPlayer().Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-                    game.Players.LocalPlayer.Character.Humanoid.Jump = true
-                end
-            end
-        end)
-    end
+    
     print("h")
     local stateType = Enum.HumanoidStateType
     local character = game.Players.LocalPlayer.Character
@@ -623,10 +568,6 @@ local success, result = pcall(function()
 
     SwordTab:Toggle("Improve reach aura 'Dont work sometimes'", ReachSettings.KillAura, function(value)
         ReachSettings.KillAura = value
-    end)
-    
-    MiscTab:Toggle("AutoPlay", Misc.AutoPlay, function(value)  
-        Misc.AutoPlay = value
     end)
     
     MiscTab:Toggle("Anti AFK", Misc.AntiAFK, function(value)  
