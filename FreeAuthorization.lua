@@ -362,7 +362,7 @@ local success, result = pcall(function()
     local function IsAlive(Humanoid)
         return Humanoid and Humanoid.Health > 0
     end
-
+    print("a")
     local function GetTouchInterest(Tool)
         return Tool and Tool:FindFirstChildWhichIsA("TouchTransmitter",true)
     end
@@ -375,7 +375,7 @@ local success, result = pcall(function()
         table.remove(Characters,table.find(Characters,LocalPlayerChar))
         return Characters
     end
-
+    print("b")
     local function Attack(Tool,TouchPart,ToTouch)
         if Tool:IsDescendantOf(workspace) then
             Tool:Activate()
@@ -383,7 +383,7 @@ local success, result = pcall(function()
             firetouchinterest(TouchPart,ToTouch,0)
         end
     end
-
+    print("c")
     getgenv().configs = {}
     getgenv().connections = {}
         
@@ -398,7 +398,7 @@ local success, result = pcall(function()
     table.insert(getgenv().configs.connections,Disable.Event:Connect(function()
         Run = false
     end))
-
+    print("d")
     while Run do
         local char = getchar()
         if IsAlive(gethumanoid(char)) then
@@ -425,7 +425,7 @@ local success, result = pcall(function()
         end
         RunService.Heartbeat:Wait()
     end
-
+    print("e")
     -- Assuming AutoPlay is in Misc section of your settings
     if getgenv().Settings.Misc.AutoPlay then
         getgenv().i_said_right_foot_creep = true
@@ -453,7 +453,7 @@ local success, result = pcall(function()
             end)
         end
     end)
-
+    print("f")
     local localPlayer = game:GetService("Players").LocalPlayer
     local currentCamera = game:GetService("Workspace").CurrentCamera
     local mouse = localPlayer:GetMouse()
@@ -480,7 +480,7 @@ local success, result = pcall(function()
         end
         return closestPlayer
     end
-
+    print("g")
     local stateType = Enum.HumanoidStateType
     local character = game.Players.LocalPlayer.Character
     local humanoid = character:WaitForChild("Humanoid")
@@ -504,7 +504,7 @@ local success, result = pcall(function()
             end
         end)
     end
-
+    print("h")
     local stateType = Enum.HumanoidStateType
     local character = game.Players.LocalPlayer.Character
     local humanoid = character:WaitForChild("Humanoid")
@@ -530,7 +530,7 @@ local success, result = pcall(function()
         end
         return nearestCharacter
     end
-
+    print("i")
     local function autoFaceNearestCharacter()
         while true do
             if Misc.Lock then
@@ -553,7 +553,7 @@ local success, result = pcall(function()
     end
 
     autoFaceNearestCharacter()
-
+    print("j")
     while Misc.AntiAFK do
         wait(0.5)
     
