@@ -634,5 +634,5 @@ local success, result = pcall(function()
 end)
 
 if not success then
-    warn(tostring(result))
+    print(tostring(result))
 end
