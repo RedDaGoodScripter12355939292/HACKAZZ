@@ -463,7 +463,7 @@ local success, result = pcall(function()
     humanoid:SetStateEnabled(stateType.FallingDown, false)
     humanoid:SetStateEnabled(stateType.Ragdoll, false)
 
-    local AutoFace = Misc.Lock
+    local AutoFace = MiscSettings.Lock
 
     local debounce = false
 
@@ -484,7 +484,7 @@ local success, result = pcall(function()
     print("i")
     local function autoFaceNearestCharacter()
         while true do
-            if Misc.Lock then
+            if MiscSettings.Lock then
                 if not debounce then
                     debounce = true
                     local nearestCharacter = findNearestCharacter()
@@ -505,7 +505,7 @@ local success, result = pcall(function()
 
     autoFaceNearestCharacter()
     print("j")
-    while Misc.AntiAFK do
+    while MiscSettings.AntiAFK do
         wait(0.5)
     
         local bb = game:GetService("VirtualUser")
@@ -570,12 +570,12 @@ local success, result = pcall(function()
         ReachSettings.KillAura = value
     end)
     
-    MiscTab:Toggle("Anti AFK", Misc.AntiAFK, function(value)  
-        Misc.AntiAFK = value
+    MiscTab:Toggle("Anti AFK", MiscSettings.AntiAFK, function(value)  
+        MiscSettings.AntiAFK = value
     end)
     print("success")
-    MiscTab:Toggle("FE Lock", Misc.Lock, function(value)  
-        Misc.Lock = value
+    MiscTab:Toggle("FE Lock", MiscSettings.Lock, function(value)  
+        MiscSettings.Lock = value
     end)
 end)
 
