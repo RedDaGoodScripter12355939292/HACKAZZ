@@ -329,10 +329,9 @@ local success, result = pcall(function()
                 end
             end
         end)
-        print("checkpoint 3")
         if not Success then warn(Result) end
     end
-
+    print("checkpoint 3")
     SebsDarkside["Thread"](function()
         SebsDarkside["InitiateWalkSpeed"]()
     end)
