@@ -460,50 +460,7 @@ local success, result = pcall(function()
     local character = game.Players.LocalPlayer.Character
     local humanoid = character:WaitForChild("Humanoid")
 
-    humanoid:SetStateEnabled(stateType.FallingDown, false)
-    humanoid:SetStateEnabled(stateType.Ragdoll, false)
 
-    local AutoFace = MiscSettings.Lock
-
-    local debounce = false
-
-    local function findNearestCharacter()
-        local maxDistance = math.huge
-        local nearestCharacter = nil
-        for _, player in ipairs(game.Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player ~= game.Players.LocalPlayer then
-                local distance = (player.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).magnitude
-                if distance < maxDistance then
-                    maxDistance = distance
-                    nearestCharacter = player.Character
-                end
-            end
-        end
-        return nearestCharacter
-    end
-    print("i")
-    local function autoFaceNearestCharacter()
-        while true do
-            if MiscSettings.Lock then
-                if not debounce then
-                    debounce = true
-                    local nearestCharacter = findNearestCharacter()
-                    if nearestCharacter then
-                        local direction = (nearestCharacter.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).unit
-                        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(game.Players.LocalPlayer.Character.PrimaryPart.Position, game.Players.LocalPlayer.Character.PrimaryPart.Position + Vector3.new(direction.x, 0, direction.z)))
-                    end
-                    wait()
-                    debounce = false
-                else
-                    wait()
-                end
-            else
-                wait()
-            end
-        end
-    end
-
-    autoFaceNearestCharacter()
     print("j")
     while MiscSettings.AntiAFK do
         wait(0.5)
