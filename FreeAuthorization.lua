@@ -28,7 +28,7 @@ local success, result = pcall(function()
             ["Lock"] = false
         }
     }
-
+    print("checkpoint 1")
     -- IMPORTANT TO PREVENT DETECTIONS
     for _, v in ipairs(getconnections(game:GetService("LogService").MessageOut)) do
         v:Disable()
@@ -96,8 +96,8 @@ local success, result = pcall(function()
         return nil
     end
 
-    -- SHORTCUTS
-
+    -- SHORTCUT
+    print("checkpoint 2")
     local Settings = getgenv().Settings
     local ReachSettings = Settings["ReachSettings"]
     local VisualsSettings = Settings["VisualSettings"]
@@ -329,7 +329,7 @@ local success, result = pcall(function()
                 end
             end
         end)
-
+        print("checkpoint 3")
         if not Success then warn(Result) end
     end
 
@@ -565,13 +565,13 @@ local success, result = pcall(function()
             bb:ClickButton2(Vector2.new())
         end)
     end
-
+    print("checkpoint 4")
     local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/Vape.txt"))()
     local Window = Library:Window("ScriptKids Paid 'Equip sword at all times or it will crash' (" .. game.PlaceId .. ")", Color3.fromRGB(255, 0, 0), Enum.KeyCode.RightControl)
     local SwordTab = Window:Tab("Main")
     local CharacterTab = Window:Tab("Player")
     local MiscTab = Window:Tab("Misc")
-
+    print("checkpoint 5")
     SwordTab:Toggle("Reach OP", ReachSettings.Enabled, function(value)
         ReachSettings.Enabled = value
     end)
@@ -627,7 +627,7 @@ local success, result = pcall(function()
     MiscTab:Toggle("Anti AFK", Misc.AntiAFK, function(value)  
         Misc.AntiAFK = value
     end)
-    
+    print("success")
     MiscTab:Toggle("FE Lock", Misc.Lock, function(value)  
         Misc.Lock = value
     end)
