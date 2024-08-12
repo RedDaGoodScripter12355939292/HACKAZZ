@@ -155,8 +155,11 @@ RunService.RenderStepped:Connect(function(deltaTime)
         for _, Player in PlayerService:GetPlayers() do
             if Player ~= LocalPlayer then
                 local MainHandle = GetHandles(LPCharacter)[1] -- Likely
-                
-                if Player.Character and Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 then
+                local SwordEquipped = false
+                if LPCharacter:FindFirstChild("Sword") then
+                    SwordEquipped = true
+                end
+                if ReachConfig.ReachEnabled and SwordEquipped and Player.Character and Player.Character.Humanoid and Player.Character.Humanoid.Health ~= 0 then
                     local OppCharacter = Player.Character
 
                     if OppCharacter:FindFirstChild("HumanoidRootPart") then
