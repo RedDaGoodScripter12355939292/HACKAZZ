@@ -10,7 +10,7 @@ getgenv().Config = {
     ["Reach"] = {
         ["ReachEnabled"] = false,
         ["ReachRadius"] = 25,
-        ["Lunge_Only"] = true,
+        ["Lunge_Only"] = false,
         ["Damage_AMP"] = false,
         ["Auto_Swing"] = true,
     }
