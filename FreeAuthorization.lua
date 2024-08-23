@@ -9,8 +9,8 @@ local success, result = pcall(function()
         ["ReachSettings"] = {
             ["Enabled"] = false,
             ["Radius"] = 15,
-            ["Damage_Amplifier_Enabled"] = false,
-            ["Damage_Amplifier_Strength"] = 1,
+            ["Damage_Amplifier_Enabled"] = true,
+            ["Damage_Amplifier_Strength"] = 15,
             ["KillAura"] = false,
         },
         ["VisualSettings"] = {
