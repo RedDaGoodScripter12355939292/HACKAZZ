@@ -109,5 +109,5 @@ local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/
 if isAuth then
     Notification.new("success", "Successful Execution", "https://discord.com/invite/yZEGcUjDGv")
 else
-    player:Kick("Script is only for beta testers!")
+    player:Kick("§§§ERROR!!§§ §§§§CLASSIFIED META ONLY§§§§")
 end
