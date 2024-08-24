@@ -1,4 +1,46 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoodScripter12355939292/HACKAZZ/main/ClassifiedProject.lua"))()
+getgenv().Config = {
+    Enabled = false,
+    ScaleReach = {
+        X = 0,
+        Y = 0,
+        Z = 0.4
+    },
+
+    Speed = {
+        Enabled = false,
+        Power = 35
+    },
+
+    Closet = {
+        Lunge_Only = false
+    },
+    
+    Visualizer = {
+        Enabled = true,
+        Visible = false
+    },
+    
+    Keybinds = {
+        Increase = "e",
+        Descrease = "r",
+        Toggle = "z",
+        Visibility = "t",
+        Speed_Toggle = "u"
+    },
+
+    Options = {
+        Increment = {
+            X = 0,
+            Y = 0,
+            Z = 0.3
+        },
+        Decrement = {
+            X = 0,
+            Y = 0,
+            Z = 0.3
+        }
+    }
+}
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/Vape.txt"))()
 local Window = Library:Window("ScriptKids BETA 'Equip sword at all times or it will crash' (" .. game.PlaceId .. ")", Color3.fromRGB(255, 0, 0), Enum.KeyCode.RightControl)
@@ -36,3 +78,4 @@ end)
 SwordTab:Textbox("Speed Level", tostring(Config.Speed.Power), function(text)
     Config.Speed.Power = tonumber(text)
 end
+loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoodScripter12355939292/HACKAZZ/main/ClassifiedProject.lua"))()
