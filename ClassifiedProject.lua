@@ -17,7 +17,7 @@ getgenv().Config = {
     
     Visualizer = {
         Enabled = true,
-        Visible = true
+        Visible = false
     },
     
     Keybinds = {
