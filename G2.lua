@@ -10,7 +10,7 @@ local success, result = pcall(function()
             ["Enabled"] = false,
             ["Radius"] = 15,
             ["Damage_Amplifier_Enabled"] = false,
-            ["Damage_Amplifier_Strength"] = 1,
+            ["Damage_Amplifier_Strength"] = 100,
             ["KillAura"] = false,
         },
         ["VisualSettings"] = {
@@ -428,7 +428,7 @@ local success, result = pcall(function()
     end
 
     -- Assuming AutoPlay is in Misc section of your settings
-    if getgenv().Settings.Misc.AutoPlay then
+    if MiscSettings.AutoPlay then
         getgenv().i_said_right_foot_creep = true
     end
 
@@ -454,7 +454,7 @@ local success, result = pcall(function()
             end)
         end
     end)
-
+    print("first check")
     local localPlayer = game:GetService("Players").LocalPlayer
     local currentCamera = game:GetService("Workspace").CurrentCamera
     local mouse = localPlayer:GetMouse()
@@ -481,7 +481,15 @@ local success, result = pcall(function()
         end
         return closestPlayer
     end
+    print("second")
+    local stateType = Enum.HumanoidStateType
+    local character = game.Players.LocalPlayer.Character
+    local humanoid = character:WaitForChild("Humanoid")
 
+    humanoid:SetStateEnabled(stateType.FallingDown, false)
+    humanoid:SetStateEnabled(stateType.Ragdoll, false)
+    print("third")
+    print("fourth")
     local stateType = Enum.HumanoidStateType
     local character = game.Players.LocalPlayer.Character
     local humanoid = character:WaitForChild("Humanoid")
@@ -489,31 +497,7 @@ local success, result = pcall(function()
     humanoid:SetStateEnabled(stateType.FallingDown, false)
     humanoid:SetStateEnabled(stateType.Ragdoll, false)
 
-    while true do
-        wait()
-        spawn(function()
-            local nigger = getClosestPlayer()
-            if game:GetService("Players").LocalPlayer.Character.PrimaryPart and getClosestPlayer() ~= nil and i_said_right_foot_creep then
-                local TargetPart = getClosestPlayer().Character.HumanoidRootPart
-                local Part = game.Players.LocalPlayer.Character.HumanoidRootPart
-                local RotateX, RotateY, RotateZ = 0, 0, 0
-                Part.CFrame = CFrame.new(Part.Position, TargetPart.Position) * CFrame.Angles(math.rad(0), math.rad(25), math.rad(0))
-                game:GetService("Players").LocalPlayer.Character.Humanoid:MoveTo(getClosestPlayer().Character.HumanoidRootPart.CFrame * Vector3.new(-3, 0, 0))
-                if getClosestPlayer().Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-                    game.Players.LocalPlayer.Character.Humanoid.Jump = true
-                end
-            end
-        end)
-    end
-
-    local stateType = Enum.HumanoidStateType
-    local character = game.Players.LocalPlayer.Character
-    local humanoid = character:WaitForChild("Humanoid")
-
-    humanoid:SetStateEnabled(stateType.FallingDown, false)
-    humanoid:SetStateEnabled(stateType.Ragdoll, false)
-
-    local AutoFace = Misc.Lock
+    local AutoFace = MiscSettings.Lock
 
     local debounce = false
 
@@ -531,31 +515,31 @@ local success, result = pcall(function()
         end
         return nearestCharacter
     end
+    print("fifth")
 
     local function autoFaceNearestCharacter()
         while true do
-            if Misc.Lock then
-                if not debounce then
-                    debounce = true
+            if MiscSettings.Lock and not debounce then
+                debounce = true
+                local playerCharacter = game.Players.LocalPlayer.Character
+                if playerCharacter and playerCharacter:FindFirstChild("HumanoidRootPart") then
                     local nearestCharacter = findNearestCharacter()
-                    if nearestCharacter then
-                        local direction = (nearestCharacter.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).unit
-                        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(game.Players.LocalPlayer.Character.PrimaryPart.Position, game.Players.LocalPlayer.Character.PrimaryPart.Position + Vector3.new(direction.x, 0, direction.z)))
+                    if nearestCharacter and nearestCharacter:FindFirstChild("HumanoidRootPart") then
+                        local direction = (nearestCharacter.HumanoidRootPart.Position - playerCharacter.HumanoidRootPart.Position).unit
+                        playerCharacter:SetPrimaryPartCFrame(CFrame.new(playerCharacter.PrimaryPart.Position, playerCharacter.PrimaryPart.Position + Vector3.new(direction.x, 0, direction.z)))
                     end
-                    wait()
-                    debounce = false
-                else
-                    wait()
                 end
+                wait(0.1)  -- Introduce a small delay to prevent excessive processing
+                debounce = false
             else
-                wait()
+                wait(0.5)  -- Larger delay when Lock is off
             end
         end
     end
 
-    autoFaceNearestCharacter()
-
-    while Misc.AntiAFK do
+    RunService.Heartbeat:Connect(autoFaceNearestCharacter)
+    print("sixth")
+    while MiscSettings.AntiAFK do
         wait(0.5)
     
         local bb = game:GetService("VirtualUser")
@@ -565,7 +549,7 @@ local success, result = pcall(function()
             bb:ClickButton2(Vector2.new())
         end)
     end
-
+    print("seventh")
     local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/Vape.txt"))()
     local Window = Library:Window("ScriptKids BETA 'Equip sword at all times or it will crash' (" .. game.PlaceId .. ")", Color3.fromRGB(255, 0, 0), Enum.KeyCode.RightControl)
     local SwordTab = Window:Tab("Main")
@@ -578,6 +562,10 @@ local success, result = pcall(function()
 
     SwordTab:Textbox("Reach Radius", tostring(ReachSettings.Radius), function(text)
         ReachSettings.Radius = tonumber(text)
+    end)
+
+    SwordTab:Toggle("DamageBoost", Damage_Amplifier_Enabled, function(value)
+        Damage_Amplifier_Enabled = value
     end)
 
     SwordTab:Toggle("Circle Visual", VisualsSettings.VisualizerEnabled, function(value)
@@ -620,19 +608,19 @@ local success, result = pcall(function()
         ReachSettings.KillAura = value
     end)
     
-    MiscTab:Toggle("AutoPlay (not work yet)", Misc.AutoPlay, function(value)  
-        Misc.AutoPlay = value
+    MiscTab:Toggle("AutoPlay", MiscSettings.AutoPlay, function(value)  
+        MiscSettings.AutoPlay = value
     end)
     
-    MiscTab:Toggle("Anti AFK", Misc.AntiAFK, function(value)  
-        Misc.AntiAFK = value
+    MiscTab:Toggle("Anti AFK", MiscSettings.AntiAFK, function(value)  
+        MiscSettings.AntiAFK = value
     end)
     
-    MiscTab:Toggle("FE Lock( not work yet)", Misc.Lock, function(value)  
-        Misc.Lock = value
+    MiscTab:Toggle("FE Lock", MiscSettings.Lock, function(value)  
+        MiscSettings.Lock = value
     end)
 end)
 
 if not success then
-    warn(tostring(result))
+    warn(result)
 end
