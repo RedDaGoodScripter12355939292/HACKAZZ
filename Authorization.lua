@@ -19,7 +19,6 @@ local Webhook_URL = "https://discord.com/api/webhooks/1223593819547766814/ssVKh1
 local authorizedUsers = {
     5407676263,
     7232739694,
-    7183262751,
     1937193879,
     3713791320,
     7154133006,
