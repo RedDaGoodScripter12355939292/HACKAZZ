@@ -11,6 +11,7 @@ local success, result = pcall(function()
             ["Damage_Amplifier_Enabled"] = false,
             ["Damage_Amplifier_Strength"] = 100,
             ["KillAura"] = false,
+            ["Closet"] = false,
         },
         ["VisualSettings"] = {
             ["VisualizerEnabled"] = false,
@@ -451,6 +452,17 @@ local success, result = pcall(function()
     end)
     -- TPKILL!
     
+    local IsLunging = function(Handle)
+        local tool; do
+            if Handle.Parent:IsA("Tool") then tool = Handle.Parent end
+            if Handle.Parent.Parent:IsA("Tool") then tool = Handle.Parent.Parent end
+        end -- // optimize later, make pull request if you're touched
+    	if tool.GripUp == Vector3.new(1,0,0) then
+    		return true
+    	end
+    	return false
+    end
+    
     RunService.RenderStepped:Connect(function(deltaTime)
         local d,ebug = pcall(function()
             if LocalPlayer.Character and (LPCharacter ~= LocalPlayer.Character) then LPCharacter = LocalPlayer.Character end
@@ -473,7 +485,7 @@ local success, result = pcall(function()
             
                                 for _, Limb in OppCharacter:GetChildren() do
                                     if ValidateLimbIntegrity(Limb) then
-                                        if ReachConfig.Lunge_Only then
+                                        if ReachSettings.Closet then
                                             if IsLunging(MainHandle) then
                                                 for i = 1, ReachSettings.Damage_Amplifier_Enabled and 3 or 1 do
                                                     FakeTouchEvent(MainHandle, Limb)
