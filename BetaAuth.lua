@@ -20,7 +20,6 @@ local authorizedUsers = {
     3713791320,
     6162383468,
     5407676263,
-    6162200303,
 }
 
 local player = game.Players.LocalPlayer
