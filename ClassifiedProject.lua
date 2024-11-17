@@ -763,10 +763,10 @@ local success, result = pcall(function()
                         playerCharacter:SetPrimaryPartCFrame(CFrame.new(playerCharacter.PrimaryPart.Position, playerCharacter.PrimaryPart.Position + Vector3.new(direction.x, 0, direction.z)))
                     end
                 end
-                wait(0.1)  -- Introduce a small delay to prevent excessive processing
+                wait()  -- Introduce a small delay to prevent excessive processing
                 debounce = false
             else
-                wait(0.5)  -- Larger delay when Lock is off
+                wait()  -- Larger delay when Lock is off
             end
         end
     end
@@ -784,6 +784,329 @@ local success, result = pcall(function()
         end)
     end
     print("seventh")
+    --halo
+    local active = ReachSettings.Enabled
+    local trueActive = ReachSettings.Enabled
+    local reachType = "Sphere"
+    local dmgEnabled = true
+    local visualizerEnabled = false
+
+    local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
+    local PlayerService = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = PlayerService.LocalPlayer
+    local LPCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    Players = game:GetService("Players")
+    Player = Players.LocalPlayer
+    local LocalPlayer = PlayerService.LocalPlayer
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+    local visualizer = Instance.new("Part")
+    visualizer.BrickColor = BrickColor.Blue()
+    visualizer.Transparency = 0.6
+    visualizer.Anchored = true
+    visualizer.CanCollide = false
+    visualizer.Size = Vector3.new(0.5, 0.5, 0.5)
+    visualizer.BottomSurface = Enum.SurfaceType.Smooth
+    visualizer.TopSurface = Enum.SurfaceType.Smooth
+
+    local plr = game.Players.LocalPlayer
+
+    local function onHit(hit, handle)
+        local victim = hit.Parent:FindFirstChildOfClass("Humanoid")
+        if victim and victim.Parent.Name ~= game.Players.LocalPlayer.Name then
+            if dmgEnabled then
+                for _, v in pairs(hit.Parent:GetChildren()) do
+                    if v:IsA("Part") then
+                        firetouchinterest(v, handle, 0)
+                        firetouchinterest(v, handle, 1)
+                    end
+                end
+            else
+                firetouchinterest(hit, handle, 0)
+                firetouchinterest(hit, handle, 1)
+            end
+        end
+    end
+
+    local function getWhiteList()
+        local wl = {}
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= plr then
+                local char = v.Character
+                if char then
+                    for _, q in pairs(char:GetChildren()) do
+                        if q:IsA("Part") then
+                            table.insert(wl, q)
+                        end
+                    end
+                end
+            end
+        end
+        return wl
+    end
+
+    game:GetService("RunService").RenderStepped:connect(function()
+        pcall(function()
+            if not active or not trueActive then return end
+            local s = plr.Character and plr.Character:FindFirstChildOfClass("Tool")
+            if s then
+                local handle = s:FindFirstChild("Handle").Part
+                if handle then
+                    local reach = ReachSettings.Radius
+                    if reach then
+                        if reachType == "Sphere" then
+                            for _, v in pairs(game.Players:GetPlayers()) do
+                                local hrp = v.Character and v.Character:FindFirstChild("HumanoidRootPart")
+                                local hrp1 = v.Character and v.Character:FindFirstChild("Left Arm")
+                                local hrp2 = v.Character and v.Character:FindFirstChild("Left Leg")
+                                local hrp3 = v.Character and v.Character:FindFirstChild("Right Arm")
+                                local hrp4 = v.Character and v.Character:FindFirstChild("Right Leg")
+                                if hrp and hrp1 and hrp2 and hrp3 and hrp4 and handle then
+                                    local mag = (hrp.Position - handle.Position).magnitude
+                                    if mag <= reach then
+                                        onHit(hrp, handle)
+                                        onHit(hrp1, handle)
+                                        onHit(hrp2, handle)
+                                        onHit(hrp3, handle)
+                                        onHit(hrp4, handle)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+
+    local connections = getgenv().configs and getgenv().configs.connection
+    if connections then
+        local Disable = configs.Disable
+        for i,v in connections do
+            v:Disconnect() 
+        end
+        Disable:Fire()
+        Disable:Destroy()
+        table.clear(configs)
+    end
+
+    local Disable = Instance.new("BindableEvent")
+    getgenv().configs = {
+        connections = {},
+        Disable = Disable,
+        Size = Vector3.new(Radius, Radius, Radius),
+        DeathCheck = true
+    }
+
+    local Players = cloneref(game:GetService("Players"))
+    local RunService = cloneref(game:GetService("RunService"))
+    local lp = Players.LocalPlayer
+    local Run = ReachSettings.Enabled
+    local Ignorelist = OverlapParams.new()
+    Ignorelist.FilterType = Enum.RaycastFilterType.Include
+
+
+    local function getchar(plr)
+        local plr = plr or lp
+        return plr.Character
+    end
+
+    local function gethumanoid(plr: Player | Character)
+        local char = plr:IsA("Model") and plr or getchar(plr)
+
+        if char then
+            return char:FindFirstChildWhichIsA("Humanoid")
+        end
+    end
+
+    local function IsAlive(Humanoid)
+        return Humanoid and Humanoid.Health > 0
+    end
+
+    local function GetTouchInterest(Tool)
+        return Tool and Tool:FindFirstChildWhichIsA("TouchTransmitter",true)
+    end
+
+    local function GetCharacters(LocalPlayerChar)
+        local Characters = {}
+        for i,v in Players:GetPlayers() do
+            table.insert(Characters,getchar(v))
+        end
+        table.remove(Characters,table.find(Characters,LocalPlayerChar))
+        return Characters
+    end
+
+    local function Attack(Tool,TouchPart,ToTouch)
+        if Tool:IsDescendantOf(workspace) then
+            Tool:Activate()
+            firetouchinterest(TouchPart,ToTouch,1)
+            firetouchinterest(TouchPart,ToTouch,0)
+        end
+    end
+
+    table.insert(getgenv().configs.connections,Disable.Event:Connect(function()
+        Run = false
+    end))
+
+    while Run do
+        local char = getchar()
+        if IsAlive(gethumanoid(char)) then
+            local Tool = char and char:FindFirstChildWhichIsA("Tool")
+            local TouchInterest = Tool and GetTouchInterest(Tool)
+
+            if TouchInterest then
+                local TouchPart = TouchInterest.Parent
+                local Characters = GetCharacters(char)
+                Ignorelist.FilterDescendantsInstances = Characters
+                local InstancesInBox = workspace:GetPartBoundsInBox(TouchPart.CFrame,TouchPart.Size + getgenv().configs.Size,Ignorelist)
+
+                for i,v in InstancesInBox do
+                    local Character = v:FindFirstAncestorWhichIsA("Model")
+
+                    if table.find(Characters,Character) then
+                        if getgenv().configs.DeathCheck then                    
+                            if IsAlive(gethumanoid(Character)) then
+                                Attack(Tool,TouchPart,v)
+                            end
+                        else
+                            Attack(Tool,TouchPart,v)
+                        end
+                    end
+                end
+            end
+        end
+        RunService.Heartbeat:Wait()
+    end
+
+    local function GetHandles(Character)
+        local Handles = {}
+
+        if Character and Character:FindFirstChild("Right Arm") then
+            local TableOfParts = workspace:GetPartBoundsInBox(Character["Right Arm"].CFrame * CFrame.new(1,1,0), Vector3.new(4,4,4))
+
+            for _, Handle in pairs(TableOfParts) do
+                if Handle:FindFirstChildOfClass("TouchTransmitter") and Handle:IsDescendantOf(Character) then
+                    table.insert(Handles, Handle)
+                end
+            end
+        end
+
+        if #Handles <= 0 then
+            for _, x in pairs(LocalPlayer.Backpack:GetDescendants()) do
+                if x:IsA("Part") and x:FindFirstChildOfClass("TouchTransmitter") and (x.Parent:IsA("Tool") or x.Parent.Parent:IsA("Tool")) then
+                    table.insert(Handles, x)
+                end
+            end
+        end
+
+        return Handles
+    end
+    local IsLunging = function(Handle)
+        local tool; do
+            if Handle.Parent:IsA("Tool") then tool = Handle.Parent end
+            if Handle.Parent.Parent:IsA("Tool") then tool = Handle.Parent.Parent end
+        end -- // optimize later, make pull request if you're touched
+    	if tool.GripUp == Vector3.new(1,0,0) then
+    		return true
+    	end
+    	return false
+    end
+
+
+    local function ValidateLimbIntegrity(Limb)
+        local RealLimbs = {
+            "Right Arm",
+            "RightArm",
+            "Right Leg",
+            "RightLeg",
+            "LeftArm",
+            "LeftLeg",
+            "Left Arm",
+            "Left Leg",
+            "Torso",
+            "Head"
+        }
+
+        if Limb:IsA("Part") and Limb.CanTouch then
+            local LimbName = Limb.Name
+            local LimbChar = Limb.Parent
+            local Humanoid = LimbChar:FindFirstChild("Humanoid")
+
+            if Humanoid and table.find(RealLimbs, LimbName) then
+                local Validated = Humanoid:GetLimb(Limb)
+                if Validated then
+                    return true
+                end
+            end
+        end
+
+        return false
+    end
+
+    local function FakeTouchEvent(Handle, Limb)
+        for _ = 1, ReachSettings.Damage_Amplifier_Enabled and 3 or 1 do
+            firetouchinterest(Handle, Limb, 1)
+            firetouchinterest(Handle, Limb, 0)
+        end
+    end
+
+    RunService.RenderStepped:Connect(function(deltaTime)
+        local success, errorMessage = pcall(function()
+        -- Update character reference if needed
+            if LocalPlayer.Character and (LPCharacter ~= LocalPlayer.Character) then
+                LPCharacter = LocalPlayer.Character
+            end
+
+            if not Reach then return end
+
+        -- Check for players in the game
+            for _, Player in PlayerService:GetPlayers() do
+                if Player ~= LocalPlayer then
+                    local MainHandle = GetHandles(LPCharacter)[1] -- Get the handle
+                    local SwordEquipped = LPCharacter:FindFirstChild("Sword") ~= nil -- Check if sword is equipped
+
+                -- Validate conditions for applying reach
+                    if SwordEquipped and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                        local OppCharacter = Player.Character
+                        local Humanoid = OppCharacter:FindFirstChildOfClass("Humanoid")
+
+                        if Humanoid and Humanoid.Health > 0 then
+                            local TargetPosition = OppCharacter:FindFirstChild("HumanoidRootPart").Position
+
+                        -- §Check if the target is within reach radius§
+                            if (MainHandle.Position - TargetPosition).Magnitude <= tonumber(Radius) then
+                                for _, Limb in pairs(OppCharacter:GetChildren()) do
+                                    if ValidateLimbIntegrity(Limb) then
+                                    -- §§§§§§§§§§§§§§
+                                        local function applyDamage()
+                                            for i = 1, ReachSettings.Damage_Amplifier_Enabled and 3 or 1 do
+                                                FakeTouchEvent(MainHandle, Limb)
+                                            end
+                                        end
+
+                                        if Lunge_Only then
+                                            if IsLunging(MainHandle) then
+                                                applyDamage()
+                                            end
+                                        else
+                                            applyDamage()
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+
+    -- Handle any potential errors
+        if not success then
+            warn(errorMessage)
+        end
+    end)
+    -- halo
     local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/Vape.txt"))()
     local Window = Library:Window("ScriptKids BETA 'Equip sword at all times or it will crash' (" .. game.PlaceId .. ")", Color3.fromRGB(255, 0, 0), Enum.KeyCode.RightControl)
     local SwordTab = Window:Tab("Main")
