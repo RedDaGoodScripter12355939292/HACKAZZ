@@ -19,7 +19,6 @@ local Webhook_URL = "https://discord.com/api/webhooks/1223593819547766814/ssVKh1
 local authorizedUsers = {
     6080671837,
     6162380793,
-    4210271587,
     6162383468,}
 
 local player = game.Players.LocalPlayer
