@@ -16,14 +16,7 @@ warn[[
 local HttpService = game:GetService("HttpService")
 local Webhook_URL = "https://discord.com/api/webhooks/1223593819547766814/ssVKh18Wpm1E_Xy1jbNxO_SCqNq4Yu4Xqi9WDk6odGtySEhrWiOnEGDTYRwr9IiEqTzq"
 
-local authorizedUsers = {
-    7613550763,
-    2340247833,
-    2361287974,
-    7613543168,
-    7613530338,
-    1092102922,
-    2046391088,}
+local authorizedUsers = {}
 
 local player = game.Players.LocalPlayer
 
