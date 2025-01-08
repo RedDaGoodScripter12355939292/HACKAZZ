@@ -1,27 +1,3 @@
-local Banned = {
-    4256059713,
-}
-
-local player = game.Players.LocalPlayer
-
-local function isAuthorized(player)
-    local playerID = player.UserId
-    for _, userID in ipairs(Banned) do
-        if playerID == userID then
-            return true
-        end
-    end
-    return false
-end
-
-local isOkay = isAuthorized(player)
-
-if isOkay then
-  print("BLOODSCRIPT FREE")
-else
-  player:Kick("BAN FROM BYPASSING KEYSYSTEM APPEAL IN https://discord.gg/fAuzbWgF ")
-end
-
 local OpenGui = Instance.new("ScreenGui")
 OpenGui.Parent = game.CoreGui
 
