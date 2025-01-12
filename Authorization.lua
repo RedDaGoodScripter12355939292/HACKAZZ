@@ -15,19 +15,17 @@ warn[[
 
 local HttpService = game:GetService("HttpService")
 local Webhook_URL = "https://discord.com/api/webhooks/1223593819547766814/ssVKh18Wpm1E_Xy1jbNxO_SCqNq4Yu4Xqi9WDk6odGtySEhrWiOnEGDTYRwr9IiEqTzq"
-
-local authorizedUsers = {
-    3050727627,
-    5345821058,
-    5724498175,}
+local data = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoodScripter12355939292/verbose-goggles/refs/heads/main/WhitelistedData.lua", true))()
 
 local player = game.Players.LocalPlayer
 
 local function isAuthorized(player)
     local playerID = player.UserId
-    for _, userID in ipairs(authorizedUsers) do
-        if playerID == userID then
-            return true
+    if UID ~= "" and data[UID] then
+        for _, userID in ipairs(data[UID]) do
+            if playerID == userID then
+                return true
+            end
         end
     end
     return false
