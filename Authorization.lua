@@ -19,6 +19,8 @@ local data = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoo
 
 local player = game.Players.LocalPlayer
 
+UID = "
+
 local function isAuthorized(player)
     local playerID = player.UserId
     if UID ~= "" and data[UID] then
