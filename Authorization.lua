@@ -19,7 +19,7 @@ local data = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoo
 
 local player = game.Players.LocalPlayer
 
-UID = "
+UID = "UID_1223467569663709338_9004"
 
 local function isAuthorized(player)
     local playerID = player.UserId
