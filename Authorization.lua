@@ -14,7 +14,7 @@ warn[[
 ]]
 
 local HttpService = game:GetService("HttpService")
-local Webhook_URL = "https://discord.com/api/webhooks/1223593819547766814/ssVKh18Wpm1E_Xy1jbNxO_SCqNq4Yu4Xqi9WDk6odGtySEhrWiOnEGDTYRwr9IiEqTzq"
+local Webhook_URL = "https://discord.com/api/webhooks/1330461987951611987/NBCY_-KAdZ3wzIE-oxZb3XF8MpJP9fW0Qo_s-AapO-e-10lRyAcs0e0zHQ0UptlnvaY7"
 local data = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoodScripter12355939292/verbose-goggles/refs/heads/main/WhitelistedData.lua", true))()
 
 local player = game.Players.LocalPlayer
