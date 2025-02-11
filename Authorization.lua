@@ -110,4 +110,6 @@ if isAuth then
     Notification.new("success", "Successful Execution", "https://discord.com/invite/yZEGcUjDGv")
 else
     player:Kick("Unauthorized! Buy: https://discord.com/invite/yZEGcUjDGv")
+    Notification.new("error", "Failed Execution", "Bro tryna bypass")
+    error("Bro thinks he can bypass")
 end
