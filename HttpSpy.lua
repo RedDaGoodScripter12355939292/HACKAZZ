@@ -1,132 +1,186 @@
 if rconsoleprint then
-    rconsoleprint("\27[32m[HttpSpy]\27[0m https://eleutheri.com - #1 Whitelist Service\n\n")
-end;
+    rconsoleprint("https://eleutheri.com - #1 Whitelist Service\n\n")
+end
 
-assert(syn or http, "Unsupported exploit (requires syn.request or http.request)");
+assert(syn or http, "Unsupported exploit (requires syn.request or http.request)")
 
-local options = ({...})[1] or { 
+local options = ({...})[1] or {
     AutoDecode = true, 
     Highlighting = true, 
     SaveLogs = true, 
     CLICommands = true, 
     ShowResponse = true, 
     BlockedURLs = {}, 
-    API = true 
-};
-
-local version = "v1.2.0";
-local logname = string.format("%d-%s-log.txt", game.PlaceId, os.date("%d_%m_%y"));
+    API = true
+}
+local version = "v1.1.3"
+local logname = string.format("%d-%s-log.txt", game.PlaceId, os.date("%d_%m_%y"))
 
 if options.SaveLogs then
-    writefile(logname, string.format("[HttpSpy] Logs from %s\n\n", os.date("%d/%m/%y"))) 
-end;
+    writefile(logname, string.format("Http Logs from %s\n\n", os.date("%d/%m/%y")))
+end
 
-local Serializer = loadstring(game:HttpGet("https://raw.githubusercontent.com/NotDSF/leopard/main/rbx/leopard-syn.lua"))();
-local reqfunc = (syn or http).request;
-local libtype = syn and "syn" or "http";
-local blocked = options.BlockedURLs;
-local enabled = true;
-local hooked = {};
-local proxied = {};
-local OnRequest = Instance.new("BindableEvent");
+local Serializer = loadstring(game:HttpGet("https://raw.githubusercontent.com/NotDSF/leopard/main/rbx/leopard-syn.lua"))()
+local clonef = clonefunction
+local pconsole = clonef(rconsoleprint)
+local format = clonef(string.format)
+local gsub = clonef(string.gsub)
+local match = clonef(string.match)
+local append = clonef(appendfile)
+local Type = clonef(type)
+local crunning = clonef(coroutine.running)
+local cwrap = clonef(coroutine.wrap)
+local cresume = clonef(coroutine.resume)
+local cyield = clonef(coroutine.yield)
+local Pcall = clonef(pcall)
+local Pairs = clonef(pairs)
+local Error = clonef(error)
+local getnamecallmethod = clonef(getnamecallmethod)
+local blocked = options.BlockedURLs
+local enabled = true
+local reqfunc = (syn or http).request
+local libtype = syn and "syn" or "http"
+local hooked = {}
+local proxied = {}
+local methods = {
+    HttpGet = not syn,
+    HttpGetAsync = not syn,
+    GetObjects = true,
+    HttpPost = not syn,
+    HttpPostAsync = not syn
+}
 
--- Helper functions
-local function printf(...)
-    local message = string.format(...)
+Serializer.UpdateConfig({ highlighting = options.Highlighting })
+
+local RecentCommit = game.HttpService:JSONDecode(game:HttpGet("https://api.github.com/repos/NotDSF/HttpSpy/commits?per_page=1&path=init.lua"))[1].commit.message
+local OnRequest = Instance.new("BindableEvent")
+
+local function printf(...) 
     if options.SaveLogs then
-        appendfile(logname, message:gsub("%\27%[%d+m", ""))
+        append(logname, gsub(format(...), "%\27%[%d+m", ""))
     end
-    return rconsoleprint(message)
+    return pconsole(format(...))
 end
 
-local function getStackTrace()
-    local trace = debug.traceback()
-    return trace:gsub("\n", "\n\t") -- Format stack trace with indentation
-end
+local function DeepClone(tbl, cloned)
+    cloned = cloned or {}
 
-local function logRequest(method, url, ...)
-    local args = Serializer.FormatArguments(...)
-    printf("\27[36m[HttpSpy] %s:\27[0m %s(%s)\n\tStack Trace:\n\t%s\n\n", method, url, args, getStackTrace())
-end
-
--- Hooking HTTP functions
-local __request = hookfunction(reqfunc, newcclosure(function(req) 
-    if type(req) ~= "table" then return __request(req) end
-    local RequestData = table.clone(req)
-
-    if not enabled then return __request(req) end
-    if type(RequestData.Url) ~= "string" then return __request(req) end
-
-    if blocked[RequestData.Url] then
-        printf("\27[31m[HttpSpy] Blocked:\27[0m %s\n\n", RequestData.Url)
-        return {}
+    for i, v in Pairs(tbl) do
+        if Type(v) == "table" then
+            cloned[i] = DeepClone(v)
+            continue
+        end
+        cloned[i] = v
     end
 
-    logRequest(libtype .. ".request", RequestData.Url, Serializer.Serialize(RequestData))
+    return cloned
+end
 
-    local t = coroutine.running()
-    coroutine.wrap(function()
-        local ok, ResponseData = pcall(__request, RequestData)
-        if not ok then
-            error(ResponseData, 0)
-        end
-
-        if options.ShowResponse then
-            logRequest("Response", RequestData.Url, Serializer.Serialize(ResponseData))
-        end
-
-        coroutine.resume(t, hooked[RequestData.Url] and hooked[RequestData.Url](ResponseData) or ResponseData)
-    end)()
-    
-    return coroutine.yield()
-end))
-
--- Hooking Namecalls (game:HttpGet, game:HttpPost, etc.)
-local __namecall
+local __namecall, __request
 __namecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     local method = getnamecallmethod()
-    if method == "HttpGet" or method == "HttpPost" then
-        logRequest("game:" .. method, ...)
+
+    if methods[method] then
+        printf("game:%s(%s)\n\n", method, Serializer.FormatArguments(...))
     end
+
     return __namecall(self, ...)
 end))
 
--- WebSocket Hooking
-if syn and syn.websocket then
-    local wsconnect, wsbackup = debug.getupvalue(syn.websocket.connect, 1)
-    wsbackup = hookfunction(wsconnect, function(...)
-        logRequest("syn.websocket.connect", ...)
-        return wsbackup(...)
-    end)
+__request = hookfunction(reqfunc, newcclosure(function(req) 
+    if Type(req) ~= "table" then return __request(req) end
+    
+    local RequestData = DeepClone(req)
+    if not enabled then
+        return __request(req)
+    end
+
+    if Type(RequestData.Url) ~= "string" then return __request(req) end
+
+    if not options.ShowResponse then
+        printf("%s.request(%s)\n\n", libtype, Serializer.Serialize(RequestData))
+        return __request(req)
+    end
+
+    local t = crunning()
+    cwrap(function() 
+        if RequestData.Url and blocked[RequestData.Url] then
+            printf("%s.request(%s) -- blocked URL\n\n", libtype, Serializer.Serialize(RequestData))
+            return cresume(t, {})
+        end
+
+        if RequestData.Url then
+            local Host = string.match(RequestData.Url, "https?://(%w+.%w+)/")
+            if Host and proxied[Host] then
+                RequestData.Url = gsub(RequestData.Url, Host, proxied[Host], 1)
+            end
+        end
+
+        OnRequest:Fire(RequestData)
+
+        local ok, ResponseData = Pcall(__request, RequestData)
+        if not ok then
+            Error(ResponseData, 0)
+        end
+
+        local BackupData = DeepClone(ResponseData)
+
+        if BackupData.Headers["Content-Type"] and match(BackupData.Headers["Content-Type"], "application/json") and options.AutoDecode then
+            local body = BackupData.Body
+            local ok, res = Pcall(game.HttpService.JSONDecode, game.HttpService, body)
+            if ok then
+                BackupData.Body = res
+            end
+        end
+
+        printf("%s.request(%s)\n\nResponse Data: %s\n\n", libtype, Serializer.Serialize(RequestData), Serializer.Serialize(BackupData))
+        cresume(t, hooked[RequestData.Url] and hooked[RequestData.Url](ResponseData) or ResponseData)
+    end)()
+    return cyield()
+end))
+
+if request then
+    replaceclosure(request, reqfunc)
 end
 
--- API Functions
 local API = {}
 API.OnRequest = OnRequest.Event
 
 function API:HookRequest(url, hook)
-    hooked[url] = hook
+    print("[HookRequest] Attempting to hook:", url)
+    
+    if not hooked[url] then
+        hooked[url] = hook
+        print("[HookRequest] Successfully hooked:", url)
+    else
+        print("[HookRequest] Already hooked:", url)
+    end
 end
 
-function API:ProxyHost(host, proxy)
+function API:ProxyHost(host, proxy) 
     proxied[host] = proxy
 end
 
-function API:RemoveProxy(host)
+function API:RemoveProxy(host) 
     if not proxied[host] then
-        error("Host is not proxied", 0)
+        error("Host isn't proxied", 0)
     end
     proxied[host] = nil
 end
 
-function API:BlockUrl(url)
+function API:UnHookRequest(url) 
+    if not hooked[url] then
+        error("URL isn't hooked", 0)
+    end
+    hooked[url] = nil
+end
+
+function API:BlockUrl(url) 
     blocked[url] = true
 end
 
-function API:WhitelistUrl(url)
-    blocked[url] = nil
+function API:WhitelistUrl(url) 
+    blocked[url] = false
 end
-
-printf("\27[32m[HttpSpy]\27[0m v%s initialized. Logs saved to: %s\n\n", version, options.SaveLogs and logname or "(Disabled)")
 
 return API
