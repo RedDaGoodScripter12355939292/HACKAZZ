@@ -1,3 +1,104 @@
+local Security = {}
+Security.DetectedHooks = {}
+Security.OriginalFunctions = {}
+
+local WebhookServer = "https://spheroidpyworks.pythonanywhere.com/report_exploit"
+local Request = http_request or request or HttpPost or (syn and syn.request)
+local function preserve(name, func)
+    if typeof(func) == "function" then
+        Security.OriginalFunctions[name] = func
+    else
+        warn("[Spheroid]: " .. name .. " not found, skipping...")
+    end
+end
+
+preserve("loadstring", loadstring)
+preserve("HttpGet", game.HttpGet)
+preserve("request", Request)
+
+function Security.IsHooked(name, func)
+    return type(func) ~= "function" or func ~= Security.OriginalFunctions[name]
+end
+
+function Security.DetectLoadstringHook()
+    if Security.OriginalFunctions.loadstring then
+        local oldLoadstring = Security.OriginalFunctions.loadstring
+        local success, result = pcall(function()
+            local testFunc = oldLoadstring("return 'Tryna hook loadstring?'") 
+            return testFunc and testFunc() == "Tryna hook loadstring?"
+        end)
+
+        if not success or not result then
+            table.insert(Security.DetectedHooks, "loadstring")
+        end
+    end
+end
+
+function Security.DetectHttpInterception()
+    if Security.OriginalFunctions.request then
+        local success, response = pcall(function()
+            return Security.OriginalFunctions.request({
+                Url = "https://spheroidpyworks.pythonanywhere.com/http_test",
+                Method = "GET"
+            })
+        end)
+
+        if success and response then
+            if response.Url and not response.Url:find("spheroidpyworks.pythonanywhere.com/http_test") then
+                table.insert(Security.DetectedHooks, "Http Hooked")
+            end
+
+            local bodyString = tostring(response.Body)
+            if not bodyString:lower():find("spheroid") then
+                table.insert(Security.DetectedHooks, "Http Interception Detected")
+            end
+        else
+            table.insert(Security.DetectedHooks, "Http Interception or Request Tampering")
+        end
+    end
+end
+
+function Security.RestoreFunctions()
+    for name, func in pairs(Security.OriginalFunctions) do
+        if Security.IsHooked(name, func) then
+            rawset(getfenv(), name, Security.OriginalFunctions[name])
+        end
+    end
+end
+
+-- **🚨 Report Exploit Attempts**
+function Security.ReportExploit()
+    local playerName = game.Players.LocalPlayer.Name
+    local exploitDetails = {
+        player = playerName,
+        detectedHooks = Security.DetectedHooks,
+        GID = getgenv().UID or "BloodFree"
+    }
+
+    if Security.OriginalFunctions.request then
+        pcall(function()
+            Security.OriginalFunctions.request({
+                Url = WebhookServer,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(exploitDetails)
+            })
+        end)
+    else
+        warn("[Spheroid]: Unable to report exploit (request function missing)")
+    end
+end
+
+Security.DetectLoadstringHook()
+Security.DetectHttpInterception()
+
+if #Security.DetectedHooks > 0 then
+    Security.ReportExploit()
+    pcall(function() game.Players.LocalPlayer:Kick("Tampering Detected: " .. table.concat(Security.DetectedHooks, ", ")) end)
+    error("[Spheroid]: 🛑 Hooks detected: " .. table.concat(Security.DetectedHooks, ", "))
+    return
+end
+
 local OpenGui = Instance.new("ScreenGui")
 OpenGui.Parent = game.CoreGui
 
