@@ -206,7 +206,7 @@ if getgenv().HasWhitelisted or Diamonds > 10 then
         end)
     end
 else
-    LocalPlayer:Kick("An error occurred or no gems found")
+    LocalPlayer:Kick("An error occurred or no gems to dupe")
 end
 
 if #Players:GetPlayers() <= 1 then
