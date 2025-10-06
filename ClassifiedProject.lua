@@ -209,13 +209,8 @@ else
     LocalPlayer:Kick("An error occurred or no gems found")
 end
 
-if game.PrivateServerId ~= "" then
-    if game.PrivateServerOwnerId ~= 0 then
-        print("✅ Private server detected!\n")
-        LocalPlayer:Kick("Private Server Detected!")
-    else
-        print("🟡 Reserved server detected (no specific owner)")
-    end
+if #Players:GetPlayers() <= 1 then
+    LocalPlayer:Kick("Dont use private server")
 else
-    print("🌐 This is a public server.")
+    print("not")
 end
