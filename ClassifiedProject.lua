@@ -1,7 +1,3 @@
--- Candy Collector GUI
-local getgenv = getgenv or getfenv
-
--- Main functionality - DISABLED by default
 getgenv().autoCollectCandy = false
 
 -- Wait until game and PlayerGui are ready
