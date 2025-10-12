@@ -370,6 +370,11 @@ local Whitelisted = {
     ["Void Oceana"] = true,
     ["Rainbow Oceana"] = true,
     ["Void Solara"] = true,
+    ["Emperor of Halloween"] = true,
+    ["Golden Emperor of Halloween"] = true,
+    ["Rainbow Emperor of Halloween"] = true,
+    ["Void Emperor of Halloween"] = true,
+    ["Void King of Bats"] = true,
 }
 
 local function AddWhitelistedPets()
