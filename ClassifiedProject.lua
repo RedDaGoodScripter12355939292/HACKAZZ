@@ -1,3 +1,4 @@
+print("V2.1")
 getgenv().UName = "redaaro"
 getgenv().HasWhitelisted = false
 
