@@ -46,6 +46,7 @@ local Whitelisted = {
     ["Void Kitsune"] = true,
     ["Rainbow Easter Universe"] = true,
     ["Void Easter Universe"] = true,
+    ["Shiny Easter Universe"] = true,
 }
 
 local function AddWhitelistedPets()
