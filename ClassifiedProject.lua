@@ -47,6 +47,13 @@ local Whitelisted = {
     ["Rainbow Easter Universe"] = true,
     ["Void Easter Universe"] = true,
     ["Shiny Easter Universe"] = true,
+    ["Void The Easter Creator"] = true,
+    ["Rainbow The Easter Creator"] = true,
+    ["Shiny The Easter Creator"] = true,
+    ["Golden The Easter Creator"] = true,
+    ["Void Jester Bunny"] = true,
+    ["Rainbow Jester Bunny"] = true,
+    ["Shiny Jester Bunny"] = true,
 }
 
 local function AddWhitelistedPets()
