@@ -1,8 +1,4 @@
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
-
 local success, result = pcall(function()
-    Notification.new("success", "Successful Execution", "Lola_ruu-g5ai CP")
-
     -- GLOBAL SETTINGS
     getgenv().Settings = {
         ["ReachSettings"] = {
