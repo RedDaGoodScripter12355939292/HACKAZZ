@@ -785,8 +785,6 @@ local success, result = pcall(function()
     local reachType = "Sphere"
     local dmgEnabled = true
     local visualizerEnabled = false
-
-    local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jxereas/UI-Libraries/main/notification_gui_library.lua", true))()
     local PlayerService = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local LocalPlayer = PlayerService.LocalPlayer
