@@ -54,6 +54,14 @@ local Whitelisted = {
     ["Void Jester Bunny"] = true,
     ["Rainbow Jester Bunny"] = true,
     ["Shiny Jester Bunny"] = true,
+    ["Rainbow Starcrusher"] = true,
+    ["Void Starcrusher"] = true,
+    ["Rainbow Cursed Pharaoh"] = true,
+    ["Void Cursed Pharaoh"] = true,
+    ["The Antimatter"] = true,
+    ["Golden The Antimatter"] = true,
+    ["Rainbow The Antimatter"] = true,
+    ["Void The Antimatter"] = true,
 }
 
 local function AddWhitelistedPets()
