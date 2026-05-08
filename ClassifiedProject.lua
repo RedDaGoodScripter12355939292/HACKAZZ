@@ -17,6 +17,8 @@ local ClientDataManager = require(LocalPlayer.PlayerScripts.MainClient.ClientDat
 local PetsInfo = require(ReplicatedStorage.Modules.PetsInfo)
 
 local Whitelisted = {
+    ["Rainbow Eternal Guardian"] = true,
+    ["Void Eternal Guardian"] = true,
     ["Solara"] = true,
     ["Rainbow Solara"] = true,
     ["Void Solara"] = true,
