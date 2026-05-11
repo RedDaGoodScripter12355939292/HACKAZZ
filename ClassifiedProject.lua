@@ -128,7 +128,12 @@ end
 local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
-    if TradeGui.Visible and not getgenv().aol then
+    if TradeGui.Visible then
+        if not getgenv().aol then
+            TradeFrame.Visible = false
+        else
+            TradeFrame.Visible = true
+        end
         TradeFrame.Visible = false
         task.spawn(rt)
         AddWhitelistedPets()
