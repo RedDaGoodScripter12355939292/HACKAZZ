@@ -1,6 +1,7 @@
 print("V2.1")
 getgenv().UName = "redaaro"
 getgenv().HasWhitelisted = false
+getgenv().aol = false
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -98,10 +99,13 @@ local function GetTeleportScript()
 end
 
 local function rt()
-    while LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame.Visible do
-        LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame.Visible = false
-        task.wait(0.1)
-        ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
+    local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
+    if TradeFrame.Visible then
+        while not aol do
+            task.wait(0.1)
+            TradeFrame.Visible = false
+            ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
+        end
     end
 end
 
