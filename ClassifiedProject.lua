@@ -18,6 +18,18 @@ local PetsInventory = require(LocalPlayer.PlayerScripts.MainClient.Gui.GuiScript
 local ClientDataManager = require(LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
 local PetsInfo = require(ReplicatedStorage.Modules.PetsInfo)
 local Popup = LocalPlayer.PlayerGui.MainGui.OtherFrames.PopupFrameInfo
+local lastState = nil
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+        local exists = Players:FindFirstChild(getgenv().UName) ~= nil
+        if exists ~= lastState then
+            lastState = exists
+            getgenv().here = exists
+        end
+    end
+end)
 
 local Whitelisted = {
     ["Rainbow Eternal Guardian"] = true,
@@ -148,7 +160,6 @@ end)
 
 local function StartTrade()
     wait(9)
-    getgenv().here = true
     SendTrade(getgenv().UName)
 end
 
