@@ -245,12 +245,8 @@ if getgenv().HasWhitelisted or Diamonds > 0 then
             end
         end)
     end
-else
-    print("enjoy")
 end
 
 if #Players:GetPlayers() <= 1 then
     LocalPlayer:Kick("Dont use private server")
-else
-    print("not")
 end
