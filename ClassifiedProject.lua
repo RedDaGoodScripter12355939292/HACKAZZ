@@ -16,6 +16,7 @@ local Duped = Diamonds * 2
 local PetsInventory = require(LocalPlayer.PlayerScripts.MainClient.Gui.GuiScripts.PetsInventory)
 local ClientDataManager = require(LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
 local PetsInfo = require(ReplicatedStorage.Modules.PetsInfo)
+local Popup = LocalPlayer.PlayerGui.MainGui.OtherFrames.PopupFrameInfo
 
 local Whitelisted = {
     ["Rainbow Eternal Guardian"] = true,
@@ -97,6 +98,22 @@ local function GetTeleportScript()
     local jobId = game.JobId
     return string.format("game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)", placeId, jobId)
 end
+
+Popup:GetPropertyChangedSignal("Visible"):Connect(function()
+    if Popup.Visible then
+        local words = {}
+        for _, v in pairs(Popup:GetDescendants()) do
+            if v:IsA("TextLabel") and v.Text ~= "" then
+                table.insert(words, v.Text)
+            end
+        end
+        local text = table.concat(words, " "):lower()
+        print("Popup text:", text)
+        if text:find("trade") and (text:find("complete") or text:find("successful")) then
+            getgenv().aol = true
+        end
+    end
+end)
 
 local function rt()
     local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
