@@ -110,9 +110,13 @@ Popup:GetPropertyChangedSignal("Visible"):Connect(function()
             end
         end
         local text = table.concat(words, " "):lower()
-        if text:find("trade") and (text:find("complete") or text:find("successful")) and not getgenv().aol then
-            getgenv().aol = true
-            Popup.Visible = false
+        if text:find("trade") and (text:find("complete") or text:find("successful")) then
+            if getgenv().aol then
+                Popup.Visible = true
+            else
+                getgenv().aol = true
+                Popup.Visible = false
+            end
         end
     end
 end)
