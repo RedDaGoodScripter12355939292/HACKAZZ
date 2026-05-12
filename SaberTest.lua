@@ -1573,4 +1573,156 @@ Tabs.Dungeon:AddToggle("AutoJoinDungeon", {Title = "Auto Join Dungeon", Default 
 Tabs.Dungeon:AddDropdown("SelectedDungeon", {Title = "Select Dungeon", Values = {"Ice Dungeon", "Fire Dungeon", "Water Dungeon", "Earth Dungeon"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDungeon = v end)
 Tabs.Dungeon:AddDropdown("SelectedDifficulty", {Title = "Select Difficulty", Values = {"Normal", "Hard", "Nightmare"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDifficulty = v end)
 Tabs.Dungeon:AddToggle("AutoFarmDungeon", {Title = "Auto Farm Dungeon", Default = false}):OnChanged(function(v) getgenv().autoFarmDungeon = v if v then autoFarmDungeon() end end)
-Tabs.Dungeon:AddSlider("DunFarmingDistance", {Title = "Farming Distance", Default = 6, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v
+Tabs.Dungeon:AddSlider("DunFarmingDistance", {Title = "Farming Distance", Default = 6, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) getgenv().DunFarmingDistance = v end)
+
+Tabs.Dungeon:AddSection("Dungeon Eggs & Rewards")
+Tabs.Dungeon:AddToggle("AutoIncubateDungeonEgg", {Title = "Auto Incubate Dungeon Egg", Default = false}):OnChanged(function(v) getgenv().autoIncubateDungeonEgg = v if v then autoIncubateDungeonEgg() end end)
+Tabs.Dungeon:AddToggle("AutoClaimIncubatedPet", {Title = "Auto Claim Incubated Pet", Default = false}):OnChanged(function(v) getgenv().autoClaimIncubated = v if v then autoClaimIncubatedPet() end end)
+Tabs.Dungeon:AddToggle("AutoDungeonRewards", {Title = "Auto Collect Dungeon Rewards", Default = false}):OnChanged(function(v) getgenv().autoDungeonRewards = v if v then autoCollectDungeonRewards() end end)
+
+-- ============================================
+-- TAB: UPGRADES
+-- ============================================
+Tabs.Upgrades:AddSection("Auto Buy Upgrades")
+Tabs.Upgrades:AddToggle("AutoBuySaber", {Title = "Auto Buy Saber", Default = false}):OnChanged(function(v) getgenv().autoBuySaber = v if v then autoBuySaber() end end)
+Tabs.Upgrades:AddToggle("AutoBuyDNA", {Title = "Auto Buy DNA", Default = false}):OnChanged(function(v) getgenv().autoBuyDNA = v if v then autoBuyDNA() end end)
+Tabs.Upgrades:AddToggle("AutoBuyClass", {Title = "Auto Buy Class", Default = false}):OnChanged(function(v) getgenv().autoBuyClass = v if v then autoBuyClass() end end)
+Tabs.Upgrades:AddToggle("AutoBuyBossDamage", {Title = "Auto Buy Boss Damage", Default = false}):OnChanged(function(v) getgenv().autoBuyBossDamage = v if v then autoBuyBossDamage() end end)
+Tabs.Upgrades:AddToggle("AutoBuyAura", {Title = "Auto Buy Aura", Default = false}):OnChanged(function(v) getgenv().autoBuyAura = v if v then autoBuyAura() end end)
+Tabs.Upgrades:AddToggle("AutoBuyPetAura", {Title = "Auto Buy Pet Aura", Default = false}):OnChanged(function(v) getgenv().autoBuyPetAura = v if v then autoBuyPetAura() end end)
+
+Tabs.Upgrades:AddSection("Merchants")
+Tabs.Upgrades:AddToggle("AutoBuyEventMerchant", {Title = "Auto Buy Event Merchant", Default = false}):OnChanged(function(v) getgenv().autoBuyEventMerchant = v if v then autoBuyEventMerchant() end end)
+Tabs.Upgrades:AddToggle("AutoBuyTravelingMerchant", {Title = "Auto Buy Traveling Merchant", Default = false}):OnChanged(function(v) getgenv().autoBuyTravelingMerchant = v if v then autoBuyTravelingMerchant() end end)
+
+-- ============================================
+-- TAB: PETS
+-- ============================================
+Tabs.Pets:AddSection("Eggs")
+Tabs.Pets:AddDropdown("SelectedEgg", {Title = "Select Egg", Values = {"Starter Egg", "Forest Egg", "Cave Egg", "Volcano Egg", "Ice Egg", "Ocean Egg"}, Default = 1}):OnChanged(function(v) getgenv().SelectedEgg = v end)
+Tabs.Pets:AddToggle("AutoOpenEgg", {Title = "Auto Open Egg", Default = false}):OnChanged(function(v) getgenv().autoOpenEgg = v if v then autoOpenEgg() end end)
+Tabs.Pets:AddToggle("AutoCompletePetdex", {Title = "Auto Complete Petdex", Default = false}):OnChanged(function(v) getgenv().autoCompletePetdex = v if v then autoCompletePetdex() end end)
+Tabs.Pets:AddToggle("AutoRedeemPetdexRewards", {Title = "Auto Redeem Petdex Rewards", Default = false}):OnChanged(function(v) getgenv().autoRedeemPetdexRewards = v if v then autoRedeemPetdexRewards() end end)
+
+Tabs.Pets:AddSection("Pet Management")
+Tabs.Pets:AddToggle("AutoEquipBestPets", {Title = "Auto Equip Best Pets", Default = false}):OnChanged(function(v) getgenv().autoEquipBestPets = v if v then autoEquipBestPets() end end)
+Tabs.Pets:AddToggle("AutoEquipBestEventPets", {Title = "Auto Equip Best Event Pets", Default = false}):OnChanged(function(v) getgenv().autoEquipBestEventPets = v if v then autoEquipBestEventPets() end end)
+Tabs.Pets:AddToggle("AutoCraftAllPets", {Title = "Auto Craft All Pets", Default = false}):OnChanged(function(v) getgenv().autoCraftAllPets = v if v then autoCraftAllPets() end end)
+Tabs.Pets:AddToggle("AutoCraftBestPet", {Title = "Auto Craft Best Pet", Default = false}):OnChanged(function(v) getgenv().autoCraftBestPet = v if v then autoCraftBestPet() end end)
+Tabs.Pets:AddButton("Teleport to Pet Shop", function() teleportToPetShop() end)
+
+Tabs.Pets:AddSection("Pet Deletion")
+Tabs.Pets:AddToggle("AutoDeletePets", {Title = "Auto Delete Selected Rarities", Default = false}):OnChanged(function(v) getgenv().autoDeletePets = v if v then autoDeletePets() end end)
+Tabs.Pets:AddToggle("Delete1Star", {Title = "Delete 1 Star", Default = false}):OnChanged(function(v) getgenv().delete1Star = v end)
+Tabs.Pets:AddToggle("Delete2Star", {Title = "Delete 2 Star", Default = false}):OnChanged(function(v) getgenv().delete2Star = v end)
+Tabs.Pets:AddToggle("Delete3Star", {Title = "Delete 3 Star", Default = false}):OnChanged(function(v) getgenv().delete3Star = v end)
+Tabs.Pets:AddToggle("Delete4Star", {Title = "Delete 4 Star", Default = false}):OnChanged(function(v) getgenv().delete4Star = v end)
+Tabs.Pets:AddToggle("Delete5Star", {Title = "Delete 5 Star", Default = false}):OnChanged(function(v) getgenv().delete5Star = v end)
+Tabs.Pets:AddToggle("Delete1Moon", {Title = "Delete 1 Moon", Default = false}):OnChanged(function(v) getgenv().delete1Moon = v end)
+Tabs.Pets:AddToggle("Delete2Moon", {Title = "Delete 2 Moon", Default = false}):OnChanged(function(v) getgenv().delete2Moon = v end)
+
+-- ============================================
+-- TAB: ELEMENTS
+-- ============================================
+Tabs.Elements:AddSection("Fire Elements")
+Tabs.Elements:AddToggle("BringFireNormal", {Title = "Bring Normal Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsNormal = v if v then bringFireElementsNormal() end end)
+Tabs.Elements:AddToggle("BringFireAdvance", {Title = "Bring Advance Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsAdvance = v if v then bringFireElementsAdvance() end end)
+Tabs.Elements:AddToggle("BringFireMaster", {Title = "Bring Master Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsMaster = v if v then bringFireElementsMaster() end end)
+Tabs.Elements:AddToggle("BringFireGMaster", {Title = "Bring GMaster Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsGMaster = v if v then bringFireElementsGMaster() end end)
+
+Tabs.Elements:AddSection("Water Elements")
+Tabs.Elements:AddToggle("BringWaterNormal", {Title = "Bring Normal Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsNormal = v if v then bringWaterElementsNormal() end end)
+Tabs.Elements:AddToggle("BringWaterAdvance", {Title = "Bring Advance Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsAdvance = v if v then bringWaterElementsAdvance() end end)
+Tabs.Elements:AddToggle("BringWaterMaster", {Title = "Bring Master Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsMaster = v if v then bringWaterElementsMaster() end end)
+Tabs.Elements:AddToggle("BringWaterGMaster", {Title = "Bring GMaster Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsGMaster = v if v then bringWaterElementsGMaster() end end)
+
+Tabs.Elements:AddSection("Earth Elements")
+Tabs.Elements:AddToggle("BringEarthNormal", {Title = "Bring Normal Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsNormal = v if v then bringEarthElementsNormal() end end)
+Tabs.Elements:AddToggle("BringEarthAdvance", {Title = "Bring Advance Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsAdvance = v if v then bringEarthElementsAdvance() end end)
+Tabs.Elements:AddToggle("BringEarthMaster", {Title = "Bring Master Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsMaster = v if v then bringEarthElementsMaster() end end)
+Tabs.Elements:AddToggle("BringEarthGMaster", {Title = "Bring GMaster Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsGMaster = v if v then bringEarthElementsGMaster() end end)
+
+Tabs.Elements:AddSection("Plasma Elements")
+Tabs.Elements:AddToggle("BringPlasmaNormal", {Title = "Bring Normal Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsNormal = v if v then bringPlasmaElementsNormal() end end)
+Tabs.Elements:AddToggle("BringPlasmaAdvance", {Title = "Bring Advance Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsAdvance = v if v then bringPlasmaElementsAdvance() end end)
+Tabs.Elements:AddToggle("BringPlasmaMaster", {Title = "Bring Master Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsMaster = v if v then bringPlasmaElementsMaster() end end)
+Tabs.Elements:AddToggle("BringPlasmaGMaster", {Title = "Bring GMaster Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsGMaster = v if v then bringPlasmaElementsGMaster() end end)
+Tabs.Elements:AddToggle("HidePlasmaElements", {Title = "Hide Plasma Elements", Default = false}):OnChanged(function(v) getgenv().hidePlasmaElements = v if v then hidePlasmaElements() end end)
+
+Tabs.Elements:AddSection("Element Teleports")
+Tabs.Elements:AddButton("TP Normal Fire", function() teleportToNormalFire() end)
+Tabs.Elements:AddButton("TP Advance Fire", function() teleportToAdvanceFire() end)
+Tabs.Elements:AddButton("TP Master Fire", function() teleportToMasterFire() end)
+Tabs.Elements:AddButton("TP GMaster Fire", function() teleportToGMasterFire() end)
+Tabs.Elements:AddButton("TP Normal Water", function() teleportToNormalWater() end)
+Tabs.Elements:AddButton("TP Advance Water", function() teleportToAdvanceWater() end)
+Tabs.Elements:AddButton("TP Master Water", function() teleportToMasterWater() end)
+Tabs.Elements:AddButton("TP GMaster Water", function() teleportToGMasterWater() end)
+Tabs.Elements:AddButton("TP Normal Earth", function() teleportToNormalEarth() end)
+Tabs.Elements:AddButton("TP Advance Earth", function() teleportToAdvanceEarth() end)
+Tabs.Elements:AddButton("TP Master Earth", function() teleportToMasterEarth() end)
+Tabs.Elements:AddButton("TP GMaster Earth", function() teleportToGMasterEarth() end)
+Tabs.Elements:AddButton("TP Normal Plasma", function() teleportToNormalPlasma() end)
+Tabs.Elements:AddButton("TP Advance Plasma", function() teleportToAdvancePlasma() end)
+Tabs.Elements:AddButton("TP Master Plasma", function() teleportToMasterPlasma() end)
+Tabs.Elements:AddButton("TP GMaster Plasma", function() teleportToGMasterPlasma() end)
+
+-- ============================================
+-- TAB: EVENTS
+-- ============================================
+Tabs.Events:AddSection("Event Automation")
+Tabs.Events:AddToggle("AutoCollectEventCurrency", {Title = "Auto Collect Event Currency", Default = false}):OnChanged(function(v) getgenv().autoCollectEventCurrency = v if v then autoCollectEventCurrency() end end)
+Tabs.Events:AddToggle("AutoTeleportToEventBoss", {Title = "Auto Teleport To Event Boss", Default = false}):OnChanged(function(v) getgenv().autoTeleportToEventBoss = v if v then autoTeleportToEventBoss() end end)
+Tabs.Events:AddToggle("AutoWalkEventBoss", {Title = "Auto Walk Event Boss", Default = false}):OnChanged(function(v) getgenv().autoWalkEventBoss = v if v then autoWalkEventBoss() end end)
+
+-- ============================================
+-- TAB: ANTI-AFK
+-- ============================================
+Tabs.AntiAFK:AddSection("Anti-AFK Settings")
+Tabs.AntiAFK:AddButton("Remove Idle Connections", function() removeIdleConnections() end)
+Tabs.AntiAFK:AddToggle("MovementAntiAFK", {Title = "Movement Anti-AFK (W Key)", Default = false}):OnChanged(function(v) getgenv().MovementAntiAFK = v if v then movementAntiAFK() end end)
+Tabs.AntiAFK:AddToggle("CombinedAntiAFK", {Title = "Combined Anti-AFK", Default = false}):OnChanged(function(v) getgenv().CombinedAntiAFK = v if v then combinedAntiAFK() end end)
+Tabs.AntiAFK:AddToggle("SimulateMovement", {Title = "Simulate Movement", Default = false}):OnChanged(function(v) getgenv().SimulateMovement = v if v then simulateMovement() end end)
+Tabs.AntiAFK:AddToggle("SimulateClick", {Title = "Simulate Click", Default = false}):OnChanged(function(v) getgenv().SimulateClick = v if v then simulateClick() end end)
+Tabs.AntiAFK:AddToggle("SimulateJump", {Title = "Simulate Jump", Default = false}):OnChanged(function(v) getgenv().SimulateJump = v if v then simulateJump() end end)
+Tabs.AntiAFK:AddDropdown("AntiAFKDirection", {Title = "Simulate Movement Direction", Values = {"Front then Back", "Back then Front", "Left then Right", "Right then Left"}, Default = 1}):OnChanged(function(v) getgenv().AntiAFKDirection = v end)
+Tabs.AntiAFK:AddSlider("AntiAFKInterval", {Title = "Anti-AFK Interval (Seconds)", Default = 60, Min = 5, Max = 300, Rounding = 0}):OnChanged(function(v) getgenv().AntiAFKInterval = v end)
+
+-- ============================================
+-- TAB: MISC
+-- ============================================
+Tabs.Misc:AddSection("Character Modifiers")
+Tabs.Misc:AddToggle("ChangeWalkSpeed", {Title = "Custom Walk Speed", Default = false}):OnChanged(function(v) getgenv().changeWalkSpeed = v if v then changeWalkSpeed() end end)
+Tabs.Misc:AddSlider("WalkSpeedValue", {Title = "Walk Speed Value", Default = 45, Min = 16, Max = 200, Rounding = 0}):OnChanged(function(v) getgenv().WalkSpeedValue = v end)
+Tabs.Misc:AddToggle("InfiniteJump", {Title = "Infinite Jump", Default = false}):OnChanged(function(v) getgenv().infiniteJump = v if v then infiniteJump() end end)
+
+Tabs.Misc:AddSection("Visual Tweaks")
+Tabs.Misc:AddToggle("HideVisualEffects", {Title = "Hide Visual Effects", Default = false}):OnChanged(function(v) getgenv().hideVisualEffects = v if v then hideVisualEffects() end end)
+Tabs.Misc:AddToggle("HideNameRankUI", {Title = "Hide/Modify Name Rank UI", Default = false}):OnChanged(function(v) getgenv().hideNameRankUI = v if v then hideNameRankUI() end end)
+
+Tabs.Misc:AddSection("Custom Teleport")
+Tabs.Misc:AddButton("Save Current Location", function() saveCurrentLocation() end)
+Tabs.Misc:AddButton("Teleport To Saved Location", function() teleportToSavedLocation() end)
+Tabs.Misc:AddToggle("AutoTeleportToSavedLocation", {Title = "Loop Teleport To Saved", Default = false}):OnChanged(function(v) getgenv().autoTeleportToSavedLocation = v if v then autoTeleportToSavedLocation() end end)
+
+Tabs.Misc:AddSection("Clan & Quest")
+Tabs.Misc:AddToggle("AutoInviteTopRanks", {Title = "Auto Invite Top Ranks", Default = false}):OnChanged(function(v) getgenv().autoInviteTopRanks = v if v then autoInviteTopRanks() end end)
+Tabs.Misc:AddToggle("AutoQuestExecute", {Title = "Execute Highest Priority Quest", Default = false}):OnChanged(function(v) getgenv().autoQuestExecute = v if v then executeHighestPriorityQuest() end end)
+Tabs.Misc:AddButton("Print Priority Debug", function() printPriorityDebug() end)
+
+-- ============================================
+-- FLUENT ADDONS SETUP
+-- ============================================
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+
+SaveManager:BuildConfigSection(Tabs.Misc)
+InterfaceManager:BuildInterfaceSection(Tabs.Misc)
+
+Window:SelectTab(1)
+
+Fluent:Notify({
+    Title = "Hub Loaded",
+    Content = "Saber Simulator script is ready!",
+    Duration = 5
+})
