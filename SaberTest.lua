@@ -139,6 +139,21 @@ function combinedAntiAFK()
     end)
 end
 
+function getBossData()
+    local bossRoot = nil
+    local bossHumanoid = nil
+    if workspace.Gameplay and workspace.Gameplay.Boss and workspace.Gameplay.Boss.BossHolder then
+        for _, descendant in pairs(workspace.Gameplay.Boss.BossHolder:GetDescendants()) do
+            if descendant.Name == "HumanoidRootPart" then
+                bossRoot = descendant
+                bossHumanoid = descendant.Parent:FindFirstChildOfClass("Humanoid")
+                break
+            end
+        end
+    end
+    return bossRoot, bossHumanoid
+end
+
 -- DUNGEON FUNCTIONS
 function autoClaimIncubatedPet()
     spawn(function()
@@ -161,24 +176,11 @@ function autoJoinDungeon()
         while getgenv().autoJoinDungeon and task do
             local dungeonId = Players.LocalPlayer:GetAttribute("DungeonId")
             if not dungeonId then
-                local dungeonInfo = ReplicatedStorage.Modules:FindFirstChild("DungeonInfo")
-                local guiScripts = Players.LocalPlayer.PlayerScripts.MainClient.Gui.GuiScripts
-                local selectedDungeon = getgenv().SelectedDungeon or "Ice Dungeon"
+                local selectedDungeon = getgenv().SelectedDungeon or "Space"
                 local selectedDifficulty = getgenv().SelectedDifficulty or "Normal"
                 
-                if guiScripts and guiScripts.DungeonSelect then
-                    guiScripts.DungeonSelect.Toggle(true)
-                    task.wait(0.5)
-                end
-                
-                if guiScripts and guiScripts.DungeonQueue then
-                    guiScripts.DungeonQueue:SetDungeon(selectedDungeon, selectedDifficulty)
-                    task.wait(0.5)
-                end
-                
-                ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "SwitchDungeonType", selectedDungeon, selectedDifficulty)
-                ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "SwitchJoinType", "Private")
-                task.wait(0.25)
+                ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "Create", "Private", selectedDungeon, selectedDifficulty)
+                task.wait(0.5)
                 ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "Start")
             end
             task.wait(0.1)
@@ -317,8 +319,9 @@ function autoCollectDaily()
             local dailyGUI = workspace.Gameplay.Locations.DailyReward.BillboardGui
             if dailyGUI and dailyGUI.Frame and dailyGUI.Frame.Desc and dailyGUI.Frame.Desc.Text then
                 local descText = dailyGUI.Frame.Desc.Text
-                if not (descText:match("%d+[hH]") or descText:match("%d+[mM]") or descText:match("%d+[sS]")) then
+                if not (descText:match("%d+[hH]") or descText:match("%d+[mM]") or descText:match("%d+[sS]") or descText:match("%d+:%d+") or descText:match("%d+:%d+:%d+")) then
                     ReplicatedStorage.Events.UIAction:FireServer("ClaimDailyReward")
+                    ReplicatedStorage.Events.UIAction:FireServer("ClaimDailyTimedReward")
                     if hasVIP then
                         ReplicatedStorage.Events.UIAction:FireServer("ClaimVIPDailyReward")
                     end
@@ -335,18 +338,16 @@ function autoTeleportToBoss()
             if Players.LocalPlayer.Character then
                 local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
                 local humanoid = Players.LocalPlayer.Character:WaitForChild("Humanoid")
+                local bossRoot, bossHumanoid = getBossData()
                 
-                for _, descendant in pairs(workspace.Gameplay.Boss.BossHolder:GetDescendants()) do
-                    if descendant.Name == "HumanoidRootPart" then
-                        local newCFrame = CFrame.new(
-                            descendant.Position.X,
-                            descendant.Position.Y - descendant.Size.Y / 2 + humanoid.HipHeight + charRoot.Size.Y / 2 + 0.1,
-                            descendant.Position.Z
-                        )
-                        charRoot.CFrame = newCFrame
-                        humanoid:MoveTo(descendant.Position)
-                        break
-                    end
+                if bossRoot then
+                    local newCFrame = CFrame.new(
+                        bossRoot.Position.X,
+                        bossRoot.Position.Y - bossRoot.Size.Y / 2 + humanoid.HipHeight + charRoot.Size.Y / 2 + 0.1,
+                        bossRoot.Position.Z
+                    )
+                    charRoot.CFrame = newCFrame
+                    humanoid:MoveTo(bossRoot.Position)
                 end
             end
             task.wait()
@@ -359,15 +360,18 @@ function autoTeleportBossPremium()
         while getgenv().autoTeleportBossPremium and task do
             if Players.LocalPlayer.Character then
                 local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-                local bossModel = workspace.Gameplay.Boss.BossHolder:FindFirstChildOfClass("Model")
-                if bossModel then
-                    local bossRoot = bossModel:FindFirstChild("HumanoidRootPart")
-                    local bossHumanoid = bossModel:FindFirstChildOfClass("Humanoid")
-                    if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
-                        local distance = (charRoot.Position - bossRoot.Position).Magnitude
-                        if distance > 15 then
-                            charRoot.CFrame = bossRoot.CFrame
-                        end
+                local bossRoot, bossHumanoid = getBossData()
+                
+                if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
+                    local distance = (charRoot.Position - bossRoot.Position).Magnitude
+                    if distance > 50 then
+                        charRoot.CFrame = bossRoot.CFrame + Vector3.new(0, 3, 0)
+                    elseif distance > 15 then
+                        charRoot.CFrame = bossRoot.CFrame
+                    else
+                        -- Bring boss to in front of player (Original Premium Boss behavior)
+                        local tween = TweenService:Create(bossRoot, TweenInfo.new(0.5, Enum.EasingStyle.Linear), { CFrame = charRoot.CFrame * CFrame.new(0, 0, -2) })
+                        tween:Play()
                     end
                 end
             end
@@ -384,29 +388,24 @@ function autoWalkBossPremium()
             if Players.LocalPlayer.Character then
                 local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 local humanoid = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                local bossModel = workspace.Gameplay.Boss.BossHolder:FindFirstChildOfClass("Model")
+                local bossRoot, bossHumanoid = getBossData()
                 
-                if bossModel then
-                    local bossRoot = bossModel:FindFirstChild("HumanoidRootPart")
-                    local bossHumanoid = bossModel:FindFirstChildOfClass("Humanoid")
+                if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
+                    getgenv().BossKillerPremWlkAlive = true
+                    local distance = (charRoot.Position - bossRoot.Position).Magnitude
                     
-                    if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
-                        getgenv().BossKillerPremWlkAlive = true
-                        local distance = (charRoot.Position - bossRoot.Position).Magnitude
-                        
-                        if distance > 50 then
-                            charRoot.CFrame = bossRoot.CFrame + Vector3.new(0, 3, 0)
-                        elseif distance > randomDistance then
-                            humanoid:MoveTo(bossRoot.Position)
-                            humanoid:MoveTo(bossRoot.Position)
-                            humanoid:MoveTo(bossRoot.Position)
-                            humanoid:MoveTo(bossRoot.Position)
-                        else
-                            humanoid:MoveTo(charRoot.Position)
-                        end
+                    if distance > 50 then
+                        charRoot.CFrame = bossRoot.CFrame + Vector3.new(0, 3, 0)
+                    elseif distance > randomDistance then
+                        humanoid:MoveTo(bossRoot.Position)
+                        humanoid:MoveTo(bossRoot.Position)
+                        humanoid:MoveTo(bossRoot.Position)
+                        humanoid:MoveTo(bossRoot.Position)
                     else
-                        getgenv().BossKillerPremWlkAlive = false
+                        humanoid:MoveTo(charRoot.Position)
                     end
+                else
+                    getgenv().BossKillerPremWlkAlive = false
                 end
             end
             task.wait(0.3)
@@ -419,14 +418,10 @@ function autoBringBoss()
         while getgenv().autoBringBoss and task do
             if Players.LocalPlayer.Character then
                 local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-                local bossModel = workspace.Gameplay.Boss.BossHolder:FindFirstChildOfClass("Model")
-                if bossModel then
-                    local bossRoot = bossModel:FindFirstChild("HumanoidRootPart")
-                    local bossHumanoid = bossModel:FindFirstChildOfClass("Humanoid")
-                    if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
-                        local tween = TweenService:Create(bossRoot, TweenInfo.new(0.5), { CFrame = charRoot.CFrame })
-                        tween:Play()
-                    end
+                local bossRoot, bossHumanoid = getBossData()
+                if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
+                    local tween = TweenService:Create(bossRoot, TweenInfo.new(0.5), { CFrame = charRoot.CFrame })
+                    tween:Play()
                 end
             end
             task.wait()
@@ -1570,7 +1565,7 @@ Tabs.Main:AddToggle("AutoBringBoss", {Title = "Auto Bring Boss", Default = false
 -- ============================================
 Tabs.Dungeon:AddSection("Dungeon Farm")
 Tabs.Dungeon:AddToggle("AutoJoinDungeon", {Title = "Auto Join Dungeon", Default = false}):OnChanged(function(v) getgenv().autoJoinDungeon = v if v then autoJoinDungeon() end end)
-Tabs.Dungeon:AddDropdown("SelectedDungeon", {Title = "Select Dungeon", Values = {"Ice Dungeon", "Fire Dungeon", "Water Dungeon", "Earth Dungeon"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDungeon = v end)
+Tabs.Dungeon:AddDropdown("SelectedDungeon", {Title = "Select Dungeon", Values = {"Space"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDungeon = v end)
 Tabs.Dungeon:AddDropdown("SelectedDifficulty", {Title = "Select Difficulty", Values = {"Normal", "Hard", "Nightmare"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDifficulty = v end)
 Tabs.Dungeon:AddToggle("AutoFarmDungeon", {Title = "Auto Farm Dungeon", Default = false}):OnChanged(function(v) getgenv().autoFarmDungeon = v if v then autoFarmDungeon() end end)
 Tabs.Dungeon:AddSlider("DunFarmingDistance", {Title = "Farming Distance", Default = 6, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) getgenv().DunFarmingDistance = v end)
