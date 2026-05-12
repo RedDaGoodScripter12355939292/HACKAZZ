@@ -1617,7 +1617,7 @@ Tabs.Pets:AddToggle("Delete1Moon", {Title = "Delete 1 Moon", Default = false}):O
 Tabs.Pets:AddToggle("Delete2Moon", {Title = "Delete 2 Moon", Default = false}):OnChanged(function(v) getgenv().delete2Moon = v end)
 
 -- ============================================
--- TAB: ELEMENTS
+-- TAB: ELEMENTS (Fixed Buttons)
 -- ============================================
 Tabs.Elements:AddSection("Fire Elements")
 Tabs.Elements:AddToggle("BringFireNormal", {Title = "Bring Normal Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsNormal = v if v then bringFireElementsNormal() end end)
@@ -1645,22 +1645,22 @@ Tabs.Elements:AddToggle("BringPlasmaGMaster", {Title = "Bring GMaster Plasma", D
 Tabs.Elements:AddToggle("HidePlasmaElements", {Title = "Hide Plasma Elements", Default = false}):OnChanged(function(v) getgenv().hidePlasmaElements = v if v then hidePlasmaElements() end end)
 
 Tabs.Elements:AddSection("Element Teleports")
-Tabs.Elements:AddButton("TP Normal Fire", function() teleportToNormalFire() end)
-Tabs.Elements:AddButton("TP Advance Fire", function() teleportToAdvanceFire() end)
-Tabs.Elements:AddButton("TP Master Fire", function() teleportToMasterFire() end)
-Tabs.Elements:AddButton("TP GMaster Fire", function() teleportToGMasterFire() end)
-Tabs.Elements:AddButton("TP Normal Water", function() teleportToNormalWater() end)
-Tabs.Elements:AddButton("TP Advance Water", function() teleportToAdvanceWater() end)
-Tabs.Elements:AddButton("TP Master Water", function() teleportToMasterWater() end)
-Tabs.Elements:AddButton("TP GMaster Water", function() teleportToGMasterWater() end)
-Tabs.Elements:AddButton("TP Normal Earth", function() teleportToNormalEarth() end)
-Tabs.Elements:AddButton("TP Advance Earth", function() teleportToAdvanceEarth() end)
-Tabs.Elements:AddButton("TP Master Earth", function() teleportToMasterEarth() end)
-Tabs.Elements:AddButton("TP GMaster Earth", function() teleportToGMasterEarth() end)
-Tabs.Elements:AddButton("TP Normal Plasma", function() teleportToNormalPlasma() end)
-Tabs.Elements:AddButton("TP Advance Plasma", function() teleportToAdvancePlasma() end)
-Tabs.Elements:AddButton("TP Master Plasma", function() teleportToMasterPlasma() end)
-Tabs.Elements:AddButton("TP GMaster Plasma", function() teleportToGMasterPlasma() end)
+Tabs.Elements:AddButton({Title = "TP Normal Fire"}, function() teleportToNormalFire() end)
+Tabs.Elements:AddButton({Title = "TP Advance Fire"}, function() teleportToAdvanceFire() end)
+Tabs.Elements:AddButton({Title = "TP Master Fire"}, function() teleportToMasterFire() end)
+Tabs.Elements:AddButton({Title = "TP GMaster Fire"}, function() teleportToGMasterFire() end)
+Tabs.Elements:AddButton({Title = "TP Normal Water"}, function() teleportToNormalWater() end)
+Tabs.Elements:AddButton({Title = "TP Advance Water"}, function() teleportToAdvanceWater() end)
+Tabs.Elements:AddButton({Title = "TP Master Water"}, function() teleportToMasterWater() end)
+Tabs.Elements:AddButton({Title = "TP GMaster Water"}, function() teleportToGMasterWater() end)
+Tabs.Elements:AddButton({Title = "TP Normal Earth"}, function() teleportToNormalEarth() end)
+Tabs.Elements:AddButton({Title = "TP Advance Earth"}, function() teleportToAdvanceEarth() end)
+Tabs.Elements:AddButton({Title = "TP Master Earth"}, function() teleportToMasterEarth() end)
+Tabs.Elements:AddButton({Title = "TP GMaster Earth"}, function() teleportToGMasterEarth() end)
+Tabs.Elements:AddButton({Title = "TP Normal Plasma"}, function() teleportToNormalPlasma() end)
+Tabs.Elements:AddButton({Title = "TP Advance Plasma"}, function() teleportToAdvancePlasma() end)
+Tabs.Elements:AddButton({Title = "TP Master Plasma"}, function() teleportToMasterPlasma() end)
+Tabs.Elements:AddButton({Title = "TP GMaster Plasma"}, function() teleportToGMasterPlasma() end)
 
 -- ============================================
 -- TAB: EVENTS
@@ -1671,10 +1671,10 @@ Tabs.Events:AddToggle("AutoTeleportToEventBoss", {Title = "Auto Teleport To Even
 Tabs.Events:AddToggle("AutoWalkEventBoss", {Title = "Auto Walk Event Boss", Default = false}):OnChanged(function(v) getgenv().autoWalkEventBoss = v if v then autoWalkEventBoss() end end)
 
 -- ============================================
--- TAB: ANTI-AFK
+-- TAB: ANTI-AFK (Fixed Button)
 -- ============================================
 Tabs.AntiAFK:AddSection("Anti-AFK Settings")
-Tabs.AntiAFK:AddButton("Remove Idle Connections", function() removeIdleConnections() end)
+Tabs.AntiAFK:AddButton({Title = "Remove Idle Connections"}, function() removeIdleConnections() end)
 Tabs.AntiAFK:AddToggle("MovementAntiAFK", {Title = "Movement Anti-AFK (W Key)", Default = false}):OnChanged(function(v) getgenv().MovementAntiAFK = v if v then movementAntiAFK() end end)
 Tabs.AntiAFK:AddToggle("CombinedAntiAFK", {Title = "Combined Anti-AFK", Default = false}):OnChanged(function(v) getgenv().CombinedAntiAFK = v if v then combinedAntiAFK() end end)
 Tabs.AntiAFK:AddToggle("SimulateMovement", {Title = "Simulate Movement", Default = false}):OnChanged(function(v) getgenv().SimulateMovement = v if v then simulateMovement() end end)
@@ -1684,7 +1684,7 @@ Tabs.AntiAFK:AddDropdown("AntiAFKDirection", {Title = "Simulate Movement Directi
 Tabs.AntiAFK:AddSlider("AntiAFKInterval", {Title = "Anti-AFK Interval (Seconds)", Default = 60, Min = 5, Max = 300, Rounding = 0}):OnChanged(function(v) getgenv().AntiAFKInterval = v end)
 
 -- ============================================
--- TAB: MISC
+-- TAB: MISC (Fixed Buttons)
 -- ============================================
 Tabs.Misc:AddSection("Character Modifiers")
 Tabs.Misc:AddToggle("ChangeWalkSpeed", {Title = "Custom Walk Speed", Default = false}):OnChanged(function(v) getgenv().changeWalkSpeed = v if v then changeWalkSpeed() end end)
@@ -1696,15 +1696,14 @@ Tabs.Misc:AddToggle("HideVisualEffects", {Title = "Hide Visual Effects", Default
 Tabs.Misc:AddToggle("HideNameRankUI", {Title = "Hide/Modify Name Rank UI", Default = false}):OnChanged(function(v) getgenv().hideNameRankUI = v if v then hideNameRankUI() end end)
 
 Tabs.Misc:AddSection("Custom Teleport")
-Tabs.Misc:AddButton("Save Current Location", function() saveCurrentLocation() end)
-Tabs.Misc:AddButton("Teleport To Saved Location", function() teleportToSavedLocation() end)
+Tabs.Misc:AddButton({Title = "Save Current Location"}, function() saveCurrentLocation() end)
+Tabs.Misc:AddButton({Title = "Teleport To Saved Location"}, function() teleportToSavedLocation() end)
 Tabs.Misc:AddToggle("AutoTeleportToSavedLocation", {Title = "Loop Teleport To Saved", Default = false}):OnChanged(function(v) getgenv().autoTeleportToSavedLocation = v if v then autoTeleportToSavedLocation() end end)
 
 Tabs.Misc:AddSection("Clan & Quest")
 Tabs.Misc:AddToggle("AutoInviteTopRanks", {Title = "Auto Invite Top Ranks", Default = false}):OnChanged(function(v) getgenv().autoInviteTopRanks = v if v then autoInviteTopRanks() end end)
 Tabs.Misc:AddToggle("AutoQuestExecute", {Title = "Execute Highest Priority Quest", Default = false}):OnChanged(function(v) getgenv().autoQuestExecute = v if v then executeHighestPriorityQuest() end end)
-Tabs.Misc:AddButton("Print Priority Debug", function() printPriorityDebug() end)
-
+Tabs.Misc:AddButton({Title = "Print Priority Debug"}, function() printPriorityDebug() end)
 -- ============================================
 -- FLUENT ADDONS SETUP
 -- ============================================
