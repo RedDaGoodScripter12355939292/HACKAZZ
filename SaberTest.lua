@@ -1,4 +1,4 @@
-print("v1")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AaronScriptz/RobloxScriptz/refs/heads/main/SaberSimulator.lua", true))()
 -- ============================================
 -- SERVICES & VARIABLES
 -- ============================================
@@ -141,118 +141,315 @@ function combinedAntiAFK()
 end
 
 function getBossData()
-    local bossRoot = nil
-    local bossHumanoid = nil
-    if workspace.Gameplay and workspace.Gameplay.Boss and workspace.Gameplay.Boss.BossHolder then
-        for _, descendant in pairs(workspace.Gameplay.Boss.BossHolder:GetDescendants()) do
-            if descendant.Name == "HumanoidRootPart" then
-                bossRoot = descendant
-                bossHumanoid = descendant.Parent:FindFirstChildOfClass("Humanoid")
-                break
+    local gameplay = workspace:FindFirstChild("Gameplay")
+    if not gameplay then return nil, nil end
+    local bossFolder = gameplay:FindFirstChild("Boss")
+    if not bossFolder then return nil, nil end
+    local bossHolder = bossFolder:FindFirstChild("BossHolder")
+    if not bossHolder then return nil, nil end
+    local bossModel = bossHolder:FindFirstChildOfClass("Model")
+    if not bossModel then return nil, nil end
+    local bossRoot = bossModel:FindFirstChild("HumanoidRootPart")
+    local bossController = bossModel:FindFirstChildOfClass("Humanoid") or bossModel:FindFirstChildOfClass("AnimationController")
+    return bossRoot, bossController
+end
+
+-- EGG PRIORITY DATA FOR SMART REPLACEMENT
+local EggPriorities = {
+    ["SECRET"] = { priority = 4, ids = { "rbxassetid://139781637243765", "rbxassetid://103333899383000" } },
+    ["THREE_MOON"] = { priority = 3, ids = { "rbxassetid://87936750091950", "rbxassetid://108817778982252" } },
+    ["TWO_MOON"] = { priority = 2, ids = { "rbxassetid://83842678544135", "rbxassetid://135133438925164" } },
+    ["ONE_MOON"] = { priority = 1, ids = { "rbxassetid://99262757782431", "rbxassetid://90375810566006" } }
+}
+
+local function GetEggPriority(imageId)
+    for tierName, tierData in pairs(EggPriorities) do
+        for _, id in pairs(tierData.ids) do
+            if imageId == id then
+                return tierData.priority, tierName
             end
         end
     end
-    return bossRoot, bossHumanoid
+    return 0, "UNKNOWN" -- Unknown eggs are treated as lowest priority
 end
 
 -- DUNGEON FUNCTIONS
 function autoClaimIncubatedPet()
-    spawn(function()
-        while getgenv().autoClaimIncubated and task do
-            local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-            local dateTimeManager = require(Players.LocalPlayer.PlayerScripts.MainClient.DateTimeManager)
-            
-            for slot, data in pairs(dataManager.Data.DungeonHatchery) do
-                if data and dateTimeManager:Now() >= data.HatchDT then
-                    ReplicatedStorage.Events.UIAction:FireServer("HatchDungeonEgg", slot)
+    task.spawn(function()
+        while getgenv().autoClaimIncubated do
+            pcall(function()
+                local ps = Players.LocalPlayer:FindFirstChild("PlayerScripts")
+                if not ps then return end
+                local dataManager = require(ps.MainClient.ClientDataManager)
+                local dateTimeManager = require(ps.MainClient.DateTimeManager)
+                local hatchery = dataManager.Data and dataManager.Data.DungeonHatchery
+                if not hatchery then return end
+                for slot, data in pairs(hatchery) do
+                    if data and data.HatchDT and dateTimeManager:Now() >= data.HatchDT then
+                        ReplicatedStorage.Events.UIAction:FireServer("HatchDungeonEgg", slot)
+                    end
                 end
-            end
+            end)
             task.wait(1)
         end
     end)
 end
 
 function autoJoinDungeon()
-    spawn(function()
-        while getgenv().autoJoinDungeon and task do
-            local dungeonId = Players.LocalPlayer:GetAttribute("DungeonId")
-            if not dungeonId then
-                local selectedDungeon = getgenv().SelectedDungeon or "Space"
-                local selectedDifficulty = getgenv().SelectedDifficulty or "Normal"
+    task.spawn(function()
+        while getgenv().autoJoinDungeon do
+            pcall(function()
+                local lp = Players.LocalPlayer
+                local isInDungeon = false
+                local dungeonStorage = workspace:FindFirstChild("DungeonStorage")
+                if dungeonStorage then
+                    for _, folder in pairs(dungeonStorage:GetChildren()) do
+                        if #folder:GetChildren() > 0 then
+                            isInDungeon = true
+                            break
+                        end
+                    end
+                end
                 
-                ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "Create", "Private", selectedDungeon, selectedDifficulty)
-                task.wait(0.5)
-                ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "Start")
-            end
-            task.wait(0.1)
+                if not isInDungeon then
+                    local dataManager = require(lp.PlayerScripts.MainClient.ClientDataManager)
+                    local dateTimeManager = require(lp.PlayerScripts.MainClient.DateTimeManager)
+                    local cooldownEnd = dataManager.Data and dataManager.Data.DungeonCooldownEndDT or 0
+                    local currentTime = dateTimeManager:Now()
+                    
+                    if currentTime >= cooldownEnd then
+                        local selectedDungeon = getgenv().SelectedDungeon or "Space"
+                        local selectedDifficulty = getgenv().SelectedDifficulty or 1
+                        ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "Create", "Public", selectedDungeon, selectedDifficulty)
+                        task.wait(1.5)
+                        ReplicatedStorage.Events.UIAction:FireServer("DungeonGroupAction", "Start")
+                    end
+                end
+            end)
+            task.wait(3)
         end
     end)
 end
 
 function autoFarmDungeon()
-    spawn(function()
-        while getgenv().autoFarmDungeon and task do
-            if Players.LocalPlayer.Character then
-                local dungeonId = Players.LocalPlayer:GetAttribute("DungeonId")
-                if dungeonId then
-                    local dungeonStorage = workspace.DungeonStorage:FindFirstChild(dungeonId)
-                    if dungeonStorage then
-                        local importantFolder = dungeonStorage:FindFirstChild("Important")
-                        if importantFolder then
-                            local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                            if charRoot then
-                                local enemies = {}
-                                for _, spawner in pairs(importantFolder:GetChildren()) do
-                                    if spawner.Name:lower():find("enemyspawner") then
-                                        for _, child in pairs(spawner:GetChildren()) do
-                                            if child:IsA("Model") and child:FindFirstChild("Head") then
-                                                table.insert(enemies, child.Head)
+    task.spawn(function()
+
+        local Players = game:GetService("Players")
+        local lp = Players.LocalPlayer
+
+        local savedCFrame = nil
+
+        while getgenv().autoFarmDungeon do
+            pcall(function()
+
+                local char = lp.Character
+                if not char then return end
+
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                local charRoot = char:FindFirstChild("HumanoidRootPart")
+
+                if not hum or not charRoot then
+                    return
+                end
+
+                -- SAVE ORIGINAL ROTATION ONCE
+                if not savedCFrame then
+                    savedCFrame = charRoot.CFrame
+                end
+
+                local dungeonStorage = workspace:FindFirstChild("DungeonStorage")
+                if not dungeonStorage then return end
+
+                local closest = nil
+                local dist = math.huge
+
+                for _, mapFolder in pairs(dungeonStorage:GetChildren()) do
+                    local importantFolder = mapFolder:FindFirstChild("Important")
+
+                    if importantFolder then
+                        for _, spawner in pairs(importantFolder:GetChildren()) do
+
+                            if spawner:IsA("BasePart")
+                            and spawner.Name:lower():find("spawner") then
+
+                                for _, mob in pairs(spawner:GetChildren()) do
+
+                                    if mob:IsA("Model") then
+                                        local hrp = mob:FindFirstChild("HumanoidRootPart")
+
+                                        if hrp then
+                                            local d =
+                                                (charRoot.Position - hrp.Position).Magnitude
+
+                                            if d < dist then
+                                                dist = d
+                                                closest = hrp
                                             end
                                         end
                                     end
-                                end
-                                
-                                if #enemies > 0 then
-                                    charRoot.CFrame = enemies[1].CFrame + Vector3.new(0, getgenv().DunFarmingDistance or 6, 0)
-                                    charRoot.AssemblyLinearVelocity = Vector3.zero
                                 end
                             end
                         end
                     end
                 end
-            end
+
+                if closest then
+
+                    local targetPos =
+                        closest.Position +
+                        Vector3.new(0, getgenv().DunFarmingDistance or 6, 0)
+
+                    hum.AutoRotate = false
+
+                    -- FACE DOWN ABOVE ENEMY
+                    charRoot.CFrame =
+                        CFrame.new(targetPos) *
+                        CFrame.Angles(math.rad(-90), 0, 0)
+
+                    charRoot.AssemblyLinearVelocity = Vector3.zero
+                end
+
+            end)
+
             task.wait()
         end
+
+        -- RESET EVERYTHING AFTER FARM OFF
+        pcall(function()
+
+            local char = lp.Character
+            if not char then return end
+
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+
+            if hum then
+                hum.AutoRotate = true
+                hum.PlatformStand = false
+                hum:ChangeState(Enum.HumanoidStateType.Running)
+            end
+
+            if hrp then
+                hrp.CFrame =
+                    CFrame.new(hrp.Position + Vector3.new(0, 5, 0))
+
+                hrp.AssemblyLinearVelocity = Vector3.zero
+            end
+        end)
+
     end)
 end
 
 function autoCollectDungeonRewards()
     spawn(function()
-        while getgenv().autoDungeonRewards and task do
-            local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-            local mainGui = playerGui:FindFirstChild("MainGui")
-            
-            if mainGui and mainGui.OtherFrames and mainGui.OtherFrames.DungeonRewards and mainGui.OtherFrames.DungeonRewards.Visible then
-                local yesButton = mainGui.OtherFrames.DungeonRewards.Frame.Buttons.Yes.Button
-                if yesButton then
-                    firesignal(yesButton.MouseButton1Click)
+        while getgenv().autoDungeonRewards do
+            pcall(function()
+                local dungeonStorage = workspace:FindFirstChild("DungeonStorage")
+                if dungeonStorage then
+                    for _, mapFolder in pairs(dungeonStorage:GetChildren()) do
+                        for _, desc in pairs(mapFolder:GetDescendants()) do
+                            if desc:IsA("ProximityPrompt") and desc.ActionText == "Claim Rewards" and desc.Enabled then
+                                
+                                -- 1. Auto Teleport to the chest
+                                if Players.LocalPlayer.Character and desc.Parent and desc.Parent:IsA("BasePart") then
+                                    local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                    if charRoot then
+                                        charRoot.CFrame = desc.Parent.CFrame + Vector3.new(0, 5, 0)
+                                        task.wait(0.3) -- Tiny wait so the server registers your new position
+                                    end
+                                end
+                                
+                                -- 2. Claim the chest
+                                fireproximityprompt(desc)
+                            end
+                        end
+                    end
                 end
-            end
-            task.wait(0.005)
+            end)
+            task.wait(0.5)
         end
     end)
 end
 
 function autoIncubateDungeonEgg()
-    spawn(function()
-        while getgenv().autoIncubateDungeonEgg and task do
-            local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-            
-            for slot, data in pairs(dataManager.Data.DungeonHatchery or {}) do
-                if data and data.CanIncubate then
-                    ReplicatedStorage.Events.UIAction:FireServer("IncubateDungeonEgg", slot)
+    task.spawn(function()
+        while getgenv().autoIncubateDungeonEgg do
+            pcall(function()
+                local playerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
+                if playerGui then
+                    local mainGui = playerGui:FindFirstChild("MainGui")
+                    if mainGui then
+                        local otherFrames = mainGui:FindFirstChild("OtherFrames")
+                        if otherFrames then
+                            local replacePopup = otherFrames:FindFirstChild("EggIncubatorReplacePopup")
+                            
+                            -- SMART REPLACEMENT LOGIC (If the popup appears because incubator is full)
+                            if replacePopup and replacePopup.Visible then
+                                local newEggPriority = 0
+                                local worstPriority = math.huge
+                                local worstEggFrame = nil
+                                
+                                local itemFrame = replacePopup:FindFirstChild("Frame") and replacePopup.Frame:FindFirstChild("ItemFrame")
+                                if itemFrame then
+                                    for _, slot in pairs(itemFrame:GetChildren()) do
+                                        if slot:IsA("Frame") and slot:FindFirstChild("ImageLabel") then
+                                            local priority, _ = GetEggPriority(slot.ImageLabel.Image)
+                                            local replaceButton = slot:FindFirstChild("Replace")
+                                            
+                                            -- If it has a "Replace" button, it's an OLD egg currently incubating
+                                            if replaceButton then
+                                                if priority < worstPriority then
+                                                    worstPriority = priority
+                                                    worstEggFrame = slot
+                                                end
+                                            else
+                                                -- If no replace button, this is the NEW egg we just got
+                                                if priority > newEggPriority then
+                                                    newEggPriority = priority
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                                
+                                -- If the new egg is better than the worst old egg, replace it!
+                                if worstEggFrame and newEggPriority > worstPriority then
+                                    local replaceButton = worstEggFrame:FindFirstChild("Replace")
+                                    if replaceButton and replaceButton:FindFirstChild("Button") then
+                                        firesignal(replaceButton.Button.MouseButton1Click)
+                                        task.wait(0.2)
+                                        
+                                        -- Confirm the replacement on the popup
+                                        local popupFrame = otherFrames:FindFirstChild("PopupFrame")
+                                        if popupFrame and popupFrame.Visible then
+                                            local yesBtn = popupFrame:FindFirstChild("Frame") and popupFrame.Frame:FindFirstChild("Buttons") and popupFrame.Frame.Buttons:FindFirstChild("Yes") and popupFrame.Frame.Buttons.Yes:FindFirstChild("Button")
+                                            if yesBtn then
+                                                firesignal(yesBtn.MouseButton1Click)
+                                                task.wait(0.5)
+                                                firesignal(yesBtn.MouseButton1Click) -- Spam confirm just in case
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
-            end
+                
+                -- NORMAL INCUBATION LOGIC (If there are empty slots)
+                local ps = Players.LocalPlayer:FindFirstChild("PlayerScripts")
+                if ps then
+                    local dataManager = require(ps.MainClient.ClientDataManager)
+                    local hatchery = dataManager.Data and dataManager.Data.DungeonHatchery
+                    if hatchery then
+                        for slot, data in pairs(hatchery) do
+                            if data and data.CanIncubate then
+                                ReplicatedStorage.Events.UIAction:FireServer("IncubateDungeonEgg", slot)
+                            end
+                        end
+                    end
+                end
+            end)
             task.wait(1)
         end
     end)
@@ -262,7 +459,6 @@ end
 function autoSwing()
     spawn(function()
         local clientTool = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientTool)
-        
         while getgenv().autoSwing and task do
             if Players.LocalPlayer.Character then
                 local humanoid = Players.LocalPlayer.Character:FindFirstChild("Humanoid")
@@ -271,7 +467,6 @@ function autoSwing()
                     if tool and tool:FindFirstChild("RemoteClick") then
                         clientTool:Swing()
                     end
-                    
                     local backpackTool = Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
                     if tool and backpackTool then
                         humanoid:EquipTool(backpackTool)
@@ -316,7 +511,6 @@ function autoCollectDaily()
         while getgenv().autoCollectDaily and task do
             local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
             local hasVIP = table.find(dataManager.Data.Passes, "VIP") ~= nil
-            
             local dailyGUI = workspace.Gameplay.Locations.DailyReward.BillboardGui
             if dailyGUI and dailyGUI.Frame and dailyGUI.Frame.Desc and dailyGUI.Frame.Desc.Text then
                 local descText = dailyGUI.Frame.Desc.Text
@@ -334,13 +528,15 @@ function autoCollectDaily()
 end
 
 function autoTeleportToBoss()
-    spawn(function()
-        while getgenv().autoTeleportToBoss and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-                local humanoid = Players.LocalPlayer.Character:WaitForChild("Humanoid")
-                local bossRoot, bossHumanoid = getBossData()
-                
+    task.spawn(function()
+        while getgenv().autoTeleportToBoss do
+            pcall(function()
+                local char = Players.LocalPlayer.Character
+                if not char then return end
+                local charRoot = char:FindFirstChild("HumanoidRootPart")
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if not charRoot or not humanoid then return end
+                local bossRoot = getBossData()
                 if bossRoot then
                     local newCFrame = CFrame.new(
                         bossRoot.Position.X,
@@ -350,57 +546,29 @@ function autoTeleportToBoss()
                     charRoot.CFrame = newCFrame
                     humanoid:MoveTo(bossRoot.Position)
                 end
-            end
+            end)
             task.wait()
         end
     end)
 end
 
-function autoTeleportBossPremium()
-    spawn(function()
-        while getgenv().autoTeleportBossPremium and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-                local bossRoot, bossHumanoid = getBossData()
-                
-                if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
-                    local distance = (charRoot.Position - bossRoot.Position).Magnitude
-                    if distance > 50 then
-                        charRoot.CFrame = bossRoot.CFrame + Vector3.new(0, 3, 0)
-                    elseif distance > 15 then
-                        charRoot.CFrame = bossRoot.CFrame
-                    else
-                        -- Bring boss to in front of player (Original Premium Boss behavior)
-                        local tween = TweenService:Create(bossRoot, TweenInfo.new(0.5, Enum.EasingStyle.Linear), { CFrame = charRoot.CFrame * CFrame.new(0, 0, -2) })
-                        tween:Play()
-                    end
-                end
-            end
-            task.wait(0.2)
-        end
-    end)
-end
-
 function autoWalkBossPremium()
-    spawn(function()
+    task.spawn(function()
         local randomDistance = math.random(4, 8)
-        
-        while getgenv().autoWalkBossPremium and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                local humanoid = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                local bossRoot, bossHumanoid = getBossData()
-                
-                if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
+        while getgenv().autoWalkBossPremium do
+            pcall(function()
+                local char = Players.LocalPlayer.Character
+                if not char then return end
+                local charRoot = char:FindFirstChild("HumanoidRootPart")
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if not charRoot or not humanoid then return end
+                local bossRoot = getBossData()
+                if bossRoot then
                     getgenv().BossKillerPremWlkAlive = true
-                    local distance = (charRoot.Position - bossRoot.Position).Magnitude
-                    
+                    local distance = (Vector3.new(charRoot.Position.X, 0, charRoot.Position.Z) - Vector3.new(bossRoot.Position.X, 0, bossRoot.Position.Z)).Magnitude
                     if distance > 50 then
                         charRoot.CFrame = bossRoot.CFrame + Vector3.new(0, 3, 0)
                     elseif distance > randomDistance then
-                        humanoid:MoveTo(bossRoot.Position)
-                        humanoid:MoveTo(bossRoot.Position)
-                        humanoid:MoveTo(bossRoot.Position)
                         humanoid:MoveTo(bossRoot.Position)
                     else
                         humanoid:MoveTo(charRoot.Position)
@@ -408,23 +576,26 @@ function autoWalkBossPremium()
                 else
                     getgenv().BossKillerPremWlkAlive = false
                 end
-            end
+            end)
             task.wait(0.3)
         end
     end)
 end
 
 function autoBringBoss()
-    spawn(function()
-        while getgenv().autoBringBoss and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-                local bossRoot, bossHumanoid = getBossData()
-                if bossRoot and bossHumanoid and bossHumanoid.Health > 0 then
-                    local tween = TweenService:Create(bossRoot, TweenInfo.new(0.5), { CFrame = charRoot.CFrame })
+    task.spawn(function()
+        while getgenv().autoBringBoss do
+            pcall(function()
+                local char = Players.LocalPlayer.Character
+                if not char then return end
+                local charRoot = char:FindFirstChild("HumanoidRootPart")
+                if not charRoot then return end
+                local bossRoot = getBossData()
+                if bossRoot then
+                    local tween = TweenService:Create(bossRoot, TweenInfo.new(0.5), {CFrame = charRoot.CFrame})
                     tween:Play()
                 end
-            end
+            end)
             task.wait()
         end
     end)
@@ -490,14 +661,71 @@ function autoBuyPetAura()
     end)
 end
 
--- EGGS & PETS FUNCTIONS
+function fetchEggShopList()
+    local eggList = {}
+    local eggMap = {}
+    local succ, shopInfo = pcall(function()
+        return require(ReplicatedStorage.Modules.PetsInfo.PetShopInfo)
+    end)
+    if succ and shopInfo then
+        for eggName, eggData in pairs(shopInfo) do
+            if type(eggName) == "string" and eggName:find("Egg") then
+                table.insert(eggList, eggName)
+                eggMap[eggName] = eggName
+            end
+        end
+    end
+    if #eggList == 0 then
+        local succ2, petsInfo = pcall(function()
+            return require(ReplicatedStorage.Modules.PetsInfo)
+        end)
+        if succ2 and petsInfo and petsInfo.Eggs then
+            for eggName, eggData in pairs(petsInfo.Eggs) do
+                if type(eggName) == "string" and not eggMap[eggName] then
+                    table.insert(eggList, eggName)
+                    eggMap[eggName] = eggName
+                end
+            end
+        end
+    end
+    if #eggList == 0 then
+        warn("Dynamic egg extraction failed. Using verified bytecode fallback list.")
+        local hardcodedEggs = {
+            "Basic Egg", "Wooden Egg", "Reinforced Egg", "Ancient", "Egg of life", 
+            "Glory Egg", "Dominus Egg", "Silver Egg", "Golden Egg", "Premium Egg", 
+            "Class Egg", "Diamond Egg", "Ruby Egg", "Alpha Egg", "Snow Egg", 
+            "Reaper Egg", "Nature Egg", "Winter Egg", "Food Egg", "Fire Egg", 
+            "Valk Egg", "Dragon Egg", "Star Egg", "Cow Egg", "Flame Egg", 
+            "Water Egg", "Ooga Egg", "Round Egg", "Heart Egg", "Matrix Egg", 
+            "Shadow Egg", "Pink Egg", "Candy Egg", "Rushed Egg", "Onetap Egg", 
+            "Swag Egg", "Triangle Egg", "Square Egg", "Cringe Egg", "Boris Egg", 
+            "Phantom Egg", "Business Egg", "Egg Egg"
+        }
+        for _, eggName in pairs(hardcodedEggs) do
+            table.insert(eggList, eggName)
+            eggMap[eggName] = eggName
+        end
+    end
+    return eggList, eggMap
+end
+
 function autoOpenEgg()
     spawn(function()
         while getgenv().autoOpenEgg and task do
-            if getgenv().SelectedEgg then
-                ReplicatedStorage.Events.UIAction:FireServer("OpenEgg", getgenv().SelectedEgg)
+            if Players.LocalPlayer.Character then
+                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local petShopLocation = workspace.Gameplay.Locations:FindFirstChild("PetShop")
+                if charRoot and petShopLocation then
+                    local horizontalDistance = Vector2.new(charRoot.Position.X - petShopLocation.CFrame.Position.X, charRoot.Position.Z - petShopLocation.CFrame.Position.Z).Magnitude
+                    if horizontalDistance > 5 then
+                        charRoot.CFrame = petShopLocation.CFrame
+                    end
+                    if getgenv().SelectedEggIsHere then
+                        ReplicatedStorage.Events.UIAction:FireServer("BuyEgg", getgenv().SelectedEggIsHere)
+                    end
+                end
             end
-            task.wait()
+            task.wait(0.1)
         end
     end)
 end
@@ -505,22 +733,41 @@ end
 function autoCompletePetdex()
     spawn(function()
         while getgenv().autoCompletePetdex and task do
-            local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-            local petsInfo = require(ReplicatedStorage.Modules.PetsInfo)
-            
-            local ownedPets = {}
-            for petId, _ in pairs(dataManager.Data.Pets or {}) do
-                ownedPets[petId] = true
-            end
-            
-            for eggName, eggData in pairs(petsInfo.Eggs) do
-                local bestPet = petsInfo:GetBestPetOfRarityFromUnlockedEgg(dataManager.Data, eggData.PetRarityToReward)
-                if bestPet and not ownedPets[bestPet] then
-                    ReplicatedStorage.Events.UIAction:FireServer("OpenEgg", eggName)
-                    task.wait(0.5)
-                    break
+            if Players.LocalPlayer.Character then
+                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local petShopLocation = workspace.Gameplay.Locations:FindFirstChild("PetShop")
+                if charRoot and petShopLocation then
+                    local horizontalDistance = Vector2.new(charRoot.Position.X - petShopLocation.CFrame.Position.X, charRoot.Position.Z - petShopLocation.CFrame.Position.Z).Magnitude
+                    if horizontalDistance > 5 then
+                        charRoot.CFrame = petShopLocation.CFrame
+                    end
                 end
             end
+            pcall(function()
+                local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
+                local petsInfo = require(ReplicatedStorage.Modules.PetsInfo)
+                local ownedPets = {}
+                for petId, petData in pairs(dataManager.Data.Pets or {}) do
+                    ownedPets[petId] = true
+                end
+                local missingCount = 0
+                for petId, petData in pairs(petsInfo.Pets) do
+                    if not ownedPets[petId] then missingCount = missingCount + 1 end
+                end
+                local skipThreshold = getgenv().skipThreshold or 0
+                if missingCount > skipThreshold then
+                    for eggName, eggData in pairs(petsInfo.Eggs) do
+                        if petsInfo.GetBestPetOfRarityFromUnlockedEgg and eggData.PetRarityToReward then
+                            local bestPet = petsInfo:GetBestPetOfRarityFromUnlockedEgg(dataManager.Data, eggData.PetRarityToReward)
+                            if bestPet and not ownedPets[bestPet] then
+                                ReplicatedStorage.Events.UIAction:FireServer("BuyEgg", eggName)
+                                task.wait(0.5)
+                                break
+                            end
+                        end
+                    end
+                end
+            end)
             task.wait(0.05)
         end
     end)
@@ -531,7 +778,6 @@ function autoRedeemPetdexRewards()
         while getgenv().autoRedeemPetdexRewards and task do
             local petdexRewards = require(ReplicatedStorage.Modules.PetdexRewardInfo)
             local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-            
             for rewardId, rewardData in pairs(petdexRewards.Items) do
                 local isClaimed = table.find(dataManager.Data.PetdexRewardsClaimed, rewardId)
                 if not isClaimed then
@@ -539,7 +785,6 @@ function autoRedeemPetdexRewards()
                     local eggsNeeded = rewardData.EggsNeeded or 0
                     local petsCompleted = petdexRewards:GetNumPetsDiscovered(dataManager.Data) or 0
                     local eggsCompleted = petdexRewards:GetNumEggsCompleted(dataManager.Data) or 0
-                    
                     if petsCompleted >= petsNeeded and eggsCompleted >= eggsNeeded then
                         ReplicatedStorage.Events.UIAction:FireServer("ClaimPetdexReward", rewardId)
                         task.wait(0.5)
@@ -576,22 +821,15 @@ end
 
 function autoCraftBestPet()
     local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-    
     spawn(function()
         while getgenv().autoCraftBestPet and task do
             local petsByType = {}
-            
             for petId, petData in pairs(dataManager.Data.Pets or {}) do
                 local classType = petData.Class and tostring(petData.Class) or "Normal"
                 local typeKey = petData.Type .. "_" .. classType
-                
-                if not petsByType[typeKey] then
-                    petsByType[typeKey] = {}
-                end
-                
+                if not petsByType[typeKey] then petsByType[typeKey] = {} end
                 table.insert(petsByType[typeKey], { id = petId, rank = petData.Rank or 0, xp = petData.XP or 0 })
             end
-            
             for _, petList in pairs(petsByType) do
                 if #petList >= 10 then
                     table.sort(petList, function(a, b)
@@ -625,29 +863,30 @@ function autoEquipBestEventPets()
 end
 
 -- PET DELETION FUNCTION
-function deletePetsByRarity()
+local PetRarityMap = {}
+pcall(function()
+    local petsInfoModule = require(ReplicatedStorage.Modules.PetsInfo.Pets)
+    for petType, info in pairs(petsInfoModule) do
+        if info.Rarity then
+            PetRarityMap[petType] = info.Rarity
+        end
+    end
+end)
+
+getgenv().selectedRarities = getgenv().selectedRarities or {}
+
+function deletePetsByRarity(targetRarities)
     local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
     local petsToDelete = {}
     
-    local rarityMap = {
-        ["1_star"] = 1, ["2_star"] = 2, ["3_star"] = 3, 
-        ["4_star"] = 4, ["5_star"] = 5, ["1_moon"] = 6, ["2_moon"] = 7
-    }
-    
-    for petId, petData in pairs(dataManager.Data.Pets or {}) do
-        local isEquipped = table.find(dataManager.Data.PetsEquipped, petId) ~= nil
-        local isLocked = petData.Locked == true
+    for uid, pet in pairs(dataManager.Data.Pets) do
+        local isEquipped = table.find(dataManager.Data.PetsEquipped, uid)
+        local isLocked = pet.Locked
         
         if not isEquipped and not isLocked then
-            local rarityNumber = rarityMap[petData.Rarity or ""]
-            
-            if rarityNumber == 1 and getgenv().delete1Star then table.insert(petsToDelete, petId)
-            elseif rarityNumber == 2 and getgenv().delete2Star then table.insert(petsToDelete, petId)
-            elseif rarityNumber == 3 and getgenv().delete3Star then table.insert(petsToDelete, petId)
-            elseif rarityNumber == 4 and getgenv().delete4Star then table.insert(petsToDelete, petId)
-            elseif rarityNumber == 5 and getgenv().delete5Star then table.insert(petsToDelete, petId)
-            elseif rarityNumber == 6 and getgenv().delete1Moon then table.insert(petsToDelete, petId)
-            elseif rarityNumber == 7 and getgenv().delete2Moon then table.insert(petsToDelete, petId)
+            local rarity = PetRarityMap[pet.Type]
+            if rarity and table.find(targetRarities, rarity) then
+                table.insert(petsToDelete, uid)
             end
         end
     end
@@ -662,360 +901,80 @@ end
 function autoDeletePets()
     spawn(function()
         while getgenv().autoDeletePets and task do
-            deletePetsByRarity()
+            if #getgenv().selectedRarities > 0 then
+                pcall(function()
+                    local deletedCount = deletePetsByRarity(getgenv().selectedRarities)
+                    if deletedCount > 0 then
+                        print("[Pet Delete] Deleted", deletedCount, "pets")
+                    end
+                end)
+            end
             task.wait(2)
         end
     end)
 end
 
 -- ELEMENT FARMING FUNCTIONS
-function bringFireElementsNormal()
-    spawn(function()
-        while getgenv().bringFireElementsNormal and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local fireZone = workspace.Gameplay.Map.ElementZones.Fire.Fire
-                    if fireZone then
-                        for _, child in pairs(fireZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
+local ElementZones = {
+    Fire = {
+        Normal = function() return workspace.Gameplay.Map.ElementZones.Fire.Fire end,
+        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedFireArea", 10).Important:WaitForChild("Fire", 10) end,
+        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterFireArea", 10).Important:WaitForChild("Fire", 10) end,
+        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterFireArea", 10).Important:WaitForChild("Fire", 10) end
+    },
+    Water = {
+        Normal = function() return workspace.Gameplay.Map.ElementZones.Water.Water end,
+        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedWaterArea", 10).Important:WaitForChild("Water", 10) end,
+        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterWaterArea", 10).Important:WaitForChild("Water", 10) end,
+        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterWaterArea", 10).Important:WaitForChild("Water", 10) end
+    },
+    Earth = {
+        Normal = function() return workspace.Gameplay.Map.ElementZones.Earth.Model.Earth end,
+        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedEarthArea", 10).Important:WaitForChild("Earth", 10) end,
+        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterEarthArea", 10).Important:WaitForChild("Earth", 10) end,
+        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterEarthArea", 10).Important:WaitForChild("Earth", 10) end
+    },
+    Plasma = {
+        Normal = function() return workspace.Gameplay.Map.ElementZones.Plasma.Plasma end,
+        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedPlasmaArea", 10).Important:WaitForChild("Plasma", 10) end,
+        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterPlasmaArea", 10).Important:WaitForChild("Plasma", 10) end,
+        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterPlasmaArea", 10).Important:WaitForChild("Plasma", 10) end
+    }
+}
 
-function bringFireElementsAdvance()
+function FarmElement(elementName, level)
     spawn(function()
-        while getgenv().bringFireElementsAdvance and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local fireZone = workspace.Gameplay.RegionsLoaded.AdvancedFireArea.Important.Fire
-                    if fireZone then
-                        for _, child in pairs(fireZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
+        local flagName = string.format("autoFarm%s%s", elementName, level)
+        
+        while getgenv()[flagName] do
+            pcall(function()
+                if Players.LocalPlayer.Character then
+                    local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if charRoot then
+                        local getZoneFolder = ElementZones[elementName] and ElementZones[elementName][level]
+                        if getZoneFolder then
+                            local success, zoneFolder = pcall(getZoneFolder)
+                            
+                            if success and zoneFolder then
+                                -- 1. Keep player inside the zone area so damage registers
+                                if zoneFolder:IsA("BasePart") then
+                                    charRoot.CFrame = zoneFolder.CFrame + Vector3.new(0, 3, 0)
+                                elseif zoneFolder:IsA("Model") and zoneFolder.PrimaryPart then
+                                    charRoot.CFrame = zoneFolder.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
+                                end
+                                
+                                -- 2. Bring the enemies to the player
+                                for _, child in pairs(zoneFolder:GetChildren()) do
+                                    if child:FindFirstChild("HumanoidRootPart") then
+                                        child.HumanoidRootPart.Anchored = true
+                                        child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
+                                    end
+                                end
                             end
                         end
                     end
                 end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringFireElementsMaster()
-    spawn(function()
-        while getgenv().bringFireElementsMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local fireZone = workspace.Gameplay.RegionsLoaded.MasterFireArea.Important.Fire
-                    if fireZone then
-                        for _, child in pairs(fireZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringFireElementsGMaster()
-    spawn(function()
-        while getgenv().bringFireElementsGMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local fireZone = workspace.Gameplay.RegionsLoaded.GrandmasterFireArea.Important.Fire
-                    if fireZone then
-                        for _, child in pairs(fireZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.05)
-        end
-    end)
-end
-
-function bringWaterElementsNormal()
-    spawn(function()
-        while getgenv().bringWaterElementsNormal and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local waterZone = workspace.Gameplay.Map.ElementZones.Water.Water
-                    if waterZone then
-                        for _, child in pairs(waterZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringWaterElementsAdvance()
-    spawn(function()
-        while getgenv().bringWaterElementsAdvance and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local waterZone = workspace.Gameplay.RegionsLoaded.AdvancedWaterArea.Important.Water
-                    if waterZone then
-                        for _, child in pairs(waterZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringWaterElementsMaster()
-    spawn(function()
-        while getgenv().bringWaterElementsMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local waterZone = workspace.Gameplay.RegionsLoaded.MasterWaterArea.Important.Water
-                    if waterZone then
-                        for _, child in pairs(waterZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringWaterElementsGMaster()
-    spawn(function()
-        while getgenv().bringWaterElementsGMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local waterZone = workspace.Gameplay.RegionsLoaded.GrandmasterWaterArea.Important.Water
-                    if waterZone then
-                        for _, child in pairs(waterZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.05)
-        end
-    end)
-end
-
-function bringEarthElementsNormal()
-    spawn(function()
-        while getgenv().bringEarthElementsNormal and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local earthZone = workspace.Gameplay.Map.ElementZones.Earth.Model.Earth
-                    if earthZone then
-                        for _, child in pairs(earthZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringEarthElementsAdvance()
-    spawn(function()
-        while getgenv().bringEarthElementsAdvance and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local earthZone = workspace.Gameplay.RegionsLoaded.AdvancedEarthArea.Important.Earth
-                    if earthZone then
-                        for _, child in pairs(earthZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringEarthElementsMaster()
-    spawn(function()
-        while getgenv().bringEarthElementsMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local earthZone = workspace.Gameplay.RegionsLoaded.MasterEarthArea.Important.Earth
-                    if earthZone then
-                        for _, child in pairs(earthZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringEarthElementsGMaster()
-    spawn(function()
-        while getgenv().bringEarthElementsGMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local earthZone = workspace.Gameplay.RegionsLoaded.GrandmasterEarthArea.Important.Earth
-                    if earthZone then
-                        for _, child in pairs(earthZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.05)
-        end
-    end)
-end
-
-function bringPlasmaElementsNormal()
-    spawn(function()
-        while getgenv().bringPlasmaElementsNormal and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local plasmaZone = workspace.Gameplay.Map.ElementZones.Plasma.Plasma
-                    if plasmaZone then
-                        for _, child in pairs(plasmaZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringPlasmaElementsAdvance()
-    spawn(function()
-        while getgenv().bringPlasmaElementsAdvance and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local plasmaZone = workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea.Important.Plasma
-                    if plasmaZone then
-                        for _, child in pairs(plasmaZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringPlasmaElementsMaster()
-    spawn(function()
-        while getgenv().bringPlasmaElementsMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local plasmaZone = workspace.Gameplay.RegionsLoaded.MasterPlasmaArea.Important.Plasma
-                    if plasmaZone then
-                        for _, child in pairs(plasmaZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait()
-        end
-    end)
-end
-
-function bringPlasmaElementsGMaster()
-    spawn(function()
-        while getgenv().bringPlasmaElementsGMaster and task do
-            if Players.LocalPlayer.Character then
-                local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if charRoot then
-                    local plasmaZone = workspace.Gameplay.RegionsLoaded.GrandmasterPlasmaArea.Important.Plasma
-                    if plasmaZone then
-                        for _, child in pairs(plasmaZone:GetChildren()) do
-                            if child:FindFirstChild("HumanoidRootPart") then
-                                child.HumanoidRootPart.Anchored = true
-                                child.HumanoidRootPart.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
-                            end
-                        end
-                    end
-                end
-            end
+            end)
             task.wait()
         end
     end)
@@ -1076,7 +1035,6 @@ function autoTeleportToEventBoss()
             if Players.LocalPlayer.Character then
                 local charRoot = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
                 local humanoid = Players.LocalPlayer.Character:WaitForChild("Humanoid")
-                
                 for _, region in pairs(workspace.Gameplay.RegionsLoaded:GetChildren()) do
                     if region.Name:find("Event") then
                         local bossHolder = region.Boss and region.Boss:FindFirstChild("BossHolder")
@@ -1099,12 +1057,10 @@ end
 function autoWalkEventBoss()
     spawn(function()
         local randomDistance = math.random(4, 8)
-        
         while getgenv().autoWalkEventBoss and task do
             if Players.LocalPlayer.Character then
                 local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 local humanoid = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                
                 for _, region in pairs(workspace.Gameplay.RegionsLoaded:GetChildren()) do
                     if region.Name:find("Event") then
                         local bossHolder = region.Boss and region.Boss:FindFirstChild("BossHolder")
@@ -1162,14 +1118,11 @@ function hideNameRankUI()
                 if player.Character and player.Character.Head and player.Character.Head.RankingGui then
                     local pName = player.Character.Head.RankingGui:FindFirstChild("PName")
                     if pName then pName.Text = "SaberSimulatorFucker" end
-                    
                     local tag1 = player.Character.Head.RankingGui:FindFirstChild("Tag1")
                     if tag1 then tag1.Text = "DEVIL" end
-                    
                     if Players.LocalPlayer.Character and Players.LocalPlayer.Character.Head then
                         Players.LocalPlayer.Character.Head.RankingGui.Tag2.Text = "Vip"
                         Players.LocalPlayer.Character.Head.RankingGui.Tag2.Visible = true
-                        
                         local elementAmount = Players.LocalPlayer.Character.Head.RankingGui.ImageFrame.Element:FindFirstChild("Amount")
                         if elementAmount then elementAmount.Text = "999+" end
                     end
@@ -1198,7 +1151,6 @@ function infiniteJump()
     spawn(function()
         local jumpAnimation = Instance.new("Animation")
         jumpAnimation.AnimationId = "rbxassetid://4210710991"
-        
         while getgenv().infiniteJump and task do
             if Players.LocalPlayer.Character then
                 local humanoid = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -1349,67 +1301,48 @@ function teleportToSavedLocation()
 end
 
 -- MERCHANT & CLAN FUNCTIONS
-function autoBuyEventMerchant()
+
+function autoBuyTravelingMerchant()
     spawn(function()
-        while getgenv().autoBuyEventMerchant and task do
-            local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-            local merchantInfo = require(ReplicatedStorage.Modules.EventMerchantInfo)
-            
-            for slot, itemData in pairs(dataManager.Data.EventMerchant.Items or {}) do
-                if itemData and itemData.BuysLeft and itemData.BuysLeft > 0 then
-                    local listing = merchantInfo.Listings[itemData.Index]
-                    if listing then
-                        local price = listing.EventCoinsPrice or 0
-                        local multiplier = dataManager.Data.EventMerchant.Multi or 1
-                        
-                        if price * multiplier <= dataManager.Data.EventCoins then
-                            ReplicatedStorage.Events.UIAction:FireServer("EventMerchantBuyItem", slot, dataManager.Data.EventMerchant.ResetDT)
-                            task.wait(0.5)
+        while getgenv().autoBuyTravelingMerchant and task do
+            pcall(function()
+                local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
+                local merchantInfo = require(ReplicatedStorage.Modules.TravelingMerchantInfo)
+                
+                if not dataManager.Data.TravelingMerchant or not dataManager.Data.TravelingMerchant.Items then return end
+                
+                for slot, itemData in pairs(dataManager.Data.TravelingMerchant.Items) do
+                    if itemData and itemData.BuysLeft and itemData.BuysLeft > 0 then
+                        local listing = merchantInfo.Listings[itemData.Index]
+                        -- Only buy if the specific item toggle is turned ON
+                        if listing and getgenv()["tm_item_" .. itemData.Index] then
+                            local price = listing.CrownsPrice or 0
+                            local multiplier = dataManager.Data.TravelingMerchant.CrownMulti or 1
+                            
+                            if price * multiplier > 0 then
+                                ReplicatedStorage.Events.UIAction:FireServer("TravelingMerchantBuyItem", slot, dataManager.Data.TravelingMerchant.ResetDT)
+                                task.wait(0.5)
+                            end
                         end
                     end
                 end
-            end
+            end)
             task.wait(1)
         end
     end)
 end
 
-function autoBuyTravelingMerchant()
-    spawn(function()
-        while getgenv().autoBuyTravelingMerchant and task do
-            local dataManager = require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
-            local merchantInfo = require(ReplicatedStorage.Modules.TravelingMerchantInfo)
-            
-            for slot, itemData in pairs(dataManager.Data.TravelingMerchant.Items or {}) do
-                if itemData and itemData.BuysLeft and itemData.BuysLeft > 0 then
-                    local listing = merchantInfo.Listings[itemData.Index]
-                    if listing and getgenv()["tm_item_" .. itemData.Index] then
-                        local price = listing.CrownsPrice or 0
-                        local multiplier = dataManager.Data.TravelingMerchant.CrownMulti or 1
-                        
-                        if price * multiplier > 0 then
-                            ReplicatedStorage.Events.UIAction:FireServer("TravelingMerchantBuyItem", slot, dataManager.Data.TravelingMerchant.ResetDT)
-                            task.wait(0.5)
-                        end
-                    end
-                end
-            end
-            task.wait(1)
-        end
-    end)
-end
+
 
 function autoInviteTopRanks()
     spawn(function()
         while getgenv().autoInviteTopRanks and task do
             local itemInfo = require(ReplicatedStorage.Modules.ItemInfo)
             local topRanks = {}
-            
             local startIndex = math.max(1, #itemInfo.Classes_Order - 4)
             for i = startIndex, #itemInfo.Classes_Order do
                 table.insert(topRanks, itemInfo.Classes_Order[i])
             end
-            
             for _, player in pairs(Players:GetPlayers()) do
                 if player ~= Players.LocalPlayer then
                     local leaderstats = player:FindFirstChild("leaderstats")
@@ -1451,9 +1384,7 @@ function getHighestPriorityQuest()
         { name = "Auto Collect Crowns", priority = 20, enabled = function() return getgenv().autoCrowns end, available = function() return true end },
         { name = "Auto Open Egg", priority = 10, enabled = function() return getgenv().autoOpenEgg end, available = function() return getgenv().SelectedEgg ~= nil end }
     }
-    
     table.sort(quests, function(a, b) return a.priority > b.priority end)
-    
     for _, quest in pairs(quests) do
         local isEnabled = pcall(quest.enabled)
         local isAvailable = pcall(quest.available)
@@ -1461,7 +1392,6 @@ function getHighestPriorityQuest()
             return quest
         end
     end
-    
     return nil
 end
 
@@ -1492,15 +1422,11 @@ function printPriorityDebug()
         { name = "Auto Crowns", priority = 20, enabled = function() return getgenv().autoCrowns end, available = function() return true end },
         { name = "Auto Open Egg", priority = 10, enabled = function() return getgenv().autoOpenEgg end, available = function() return getgenv().SelectedEgg ~= nil end }
     }
-    
     table.sort(quests, function(a, b) return a.priority > b.priority end)
-    
     print("================ Priority Debug ================")
     print(string.format("%-40s %-8s %-10s %-10s", "Action", "Priority", "Enabled", "Available"))
     print(string.rep("-", 65))
-    
     local currentQuest = getHighestPriorityQuest()
-    
     for _, quest in pairs(quests) do
         local isEnabled = pcall(quest.enabled)
         local isAvailable = pcall(quest.available)
@@ -1508,7 +1434,6 @@ function printPriorityDebug()
         if currentQuest and currentQuest.name == quest.name then selected = " <--" end
         print(string.format("%-40s %-8d %-10s %-10s%s", quest.name, quest.priority, tostring(isEnabled), tostring(isAvailable), selected))
     end
-    
     print("================================================\n")
     if currentQuest then
         print("CURRENT: " .. currentQuest.name .. " (Priority: " .. currentQuest.priority .. ")")
@@ -1517,206 +1442,469 @@ function printPriorityDebug()
     end
 end
 
-
 -- ============================================
--- FLUENT UI LIBRARY SETUP
+-- BLOODV3 UI LIBRARY SETUP
 -- ============================================
-local Fluent = loadstring(game:HttpGet("https://github.com/StyearX/Fluent-Modded/releases/download/Fluent/FluentLite"))()
+local m0dznv1 = loadstring(game:HttpGet("https://raw.githubusercontent.com/m0dzn1/m0dzn-Roblox-UI-Library-V1.0/refs/heads/main/m0dzn-Ui-lib-V1.lua"))()
 
-local Window = Fluent:CreateWindow({
-    Title = "Saber Simulator Hub",
-    SubTitle = "Ultimate Automation",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "AMOLED",
-    MinimizeKey = Enum.KeyCode.LeftControl
+local Window = m0dznv1:CreateWindow({
+    Title = "BloodV3",
+    Keybind = Enum.KeyCode.RightShift,
+    Theme = {
+        Name = "Blood",
+        Main = {20, 5, 5},
+        Top = {35, 10, 10},
+        Text = {255, 200, 200},
+        Accent = {255, 30, 30},
+        Stroke = {80, 20, 20},
+    },
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "solar/sword-bold" }),
-    Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "solar/castle-bold" }),
-    Upgrades = Window:AddTab({ Title = "Upgrades", Icon = "solar/upload-bold" }),
-    Pets = Window:AddTab({ Title = "Pets", Icon = "solar/paw-bold" }),
-    Elements = Window:AddTab({ Title = "Elements", Icon = "solar/fire-bold" }),
-    Events = Window:AddTab({ Title = "Events", Icon = "solar/calendar-bold" }),
-    AntiAFK = Window:AddTab({ Title = "Anti-AFK", Icon = "solar/shield-bold" }),
-    Misc = Window:AddTab({ Title = "Misc", Icon = "solar/settings-bold" })
+-- ============================================
+-- TABS
+-- ============================================
+local Main = Window:Tab("Main")
+local Boss = Window:Tab("Boss")
+local Dungeon = Window:Tab("Dungeon")
+local Eggs = Window:Tab("Eggs")
+local Pets = Window:Tab("Pets")
+local Upgrades = Window:Tab("Upgrades")
+local Elements = Window:Tab("Elements")
+local Events = Window:Tab("Events")
+local AntiAFK = Window:Tab("Anti-AFK")
+local Misc = Window:Tab("Misc")
+
+-- ============================================
+-- MAIN TAB (Core Farming)
+-- ============================================
+Main:Section("Farming")
+
+Main:Toggle("Auto Swing", false, function(state)
+    getgenv().autoSwing = state
+    if state then autoSwing() end
+end)
+
+Main:Toggle("Auto Collect Crowns", false, function(state)
+    getgenv().autoCrowns = state
+    if state then autoCollectCrowns() end
+end)
+
+Main:Toggle("Auto Sell DNA", false, function(state)
+    getgenv().autoSellDNA = state
+    if state then autoSellDNA() end
+end)
+
+Main:Toggle("Auto Collect Daily", false, function(state)
+    getgenv().autoCollectDaily = state
+    if state then autoCollectDaily() end
+end)
+
+Main:Section("Quest System")
+
+Main:Toggle("Auto Execute Priority Quest (WIP)", false, function(state)
+    if state then
+        Window:Notification("This feature is Work In Progress!", "error")
+    end
+    getgenv().autoQuestExecute = false 
+end)
+
+Main:Button("Print Priority Debug", function()
+    printPriorityDebug()
+end)
+
+-- ============================================
+-- BOSS TAB
+-- ============================================
+Boss:Section("Boss Farm")
+
+Boss:Toggle("Auto Teleport to Boss", false, function(state)
+    getgenv().autoTeleportToBoss = state
+    if state then autoTeleportToBoss() end
+end)
+
+Boss:Toggle("Auto Bring Boss", false, function(state)
+    getgenv().autoBringBoss = state
+    if state then autoBringBoss() end
+end)
+
+Boss:Toggle("Auto Walk Boss Premium", false, function(state)
+    getgenv().autoWalkBossPremium = state
+    if state then autoWalkBossPremium() end
+end)
+
+-- ============================================
+-- DUNGEON TAB
+-- ============================================
+Dungeon:Section("Dungeon Automation")
+
+Dungeon:Toggle("Auto Join Dungeon", false, function(state)
+    getgenv().autoJoinDungeon = state
+    if state then autoJoinDungeon() end
+end)
+
+Dungeon:Dropdown("Select Dungeon", {"Space"}, function(selected)
+    getgenv().SelectedDungeon = selected
+end)
+
+Dungeon:Dropdown("Select Difficulty", {"Easy", "Medium", "Hard", "Impossible"}, function(selected)
+    local difficultyMap = {["Easy"] = 1, ["Medium"] = 2, ["Hard"] = 3, ["Impossible"] = 4}
+    getgenv().SelectedDifficulty = difficultyMap[selected] or 1
+end)
+
+Dungeon:Toggle("Auto Farm Dungeon", false, function(state)
+    getgenv().autoFarmDungeon = state
+    if state then autoFarmDungeon() end
+end)
+
+Dungeon:Slider("Farming Distance", 2, 20, 6, function(value)
+    getgenv().DunFarmingDistance = value
+end)
+
+Dungeon:Toggle("Auto Collect Dungeon Rewards", false, function(state)
+    getgenv().autoDungeonRewards = state
+    if state then autoCollectDungeonRewards() end
+end)
+
+Dungeon:Button("Teleport to Chest", teleportToChest)
+
+Dungeon:Section("Incubator")
+
+Dungeon:Toggle("Auto Claim Incubated Pet", false, function(state)
+    getgenv().autoClaimIncubated = state
+    if state then autoClaimIncubatedPet() end
+end)
+
+Dungeon:Toggle("Auto Incubate Dungeon Egg (Smart Replace)", false, function(state)
+    getgenv().autoIncubateDungeonEgg = state
+    if state then autoIncubateDungeonEgg() end
+end)
+
+-- ============================================
+-- EGGS TAB (Hatching & Petdex)
+-- ============================================
+Eggs:Section("Egg Hatching")
+
+local eggList, eggMap = fetchEggShopList()
+if eggList[1] and eggMap[eggList[1]] then
+    getgenv().SelectedEggIsHere = eggMap[eggList[1]]
+end
+
+Eggs:Dropdown("Select Egg", eggList, function(selected)
+    getgenv().SelectedEggIsHere = eggMap[selected]
+end)
+
+Eggs:Toggle("Auto Open Egg", false, function(state)
+    getgenv().autoOpenEgg = state
+    if state then autoOpenEgg() end
+end)
+
+Eggs:Section("Petdex")
+
+Eggs:Toggle("Auto Complete Petdex", false, function(state)
+    getgenv().autoCompletePetdex = state
+    if state then autoCompletePetdex() end
+end)
+
+Eggs:Toggle("Auto Redeem Petdex Rewards", false, function(state)
+    getgenv().autoRedeemPetdexRewards = state
+    if state then autoRedeemPetdexRewards() end
+end)
+
+-- ============================================
+-- UPGRADES TAB
+-- ============================================
+Upgrades:Section("Auto Buy Upgrades")
+
+Upgrades:Toggle("Auto Buy Saber", false, function(state)
+    getgenv().autoBuySaber = state
+    if state then autoBuySaber() end
+end)
+
+Upgrades:Toggle("Auto Buy DNA", false, function(state)
+    getgenv().autoBuyDNA = state
+    if state then autoBuyDNA() end
+end)
+
+Upgrades:Toggle("Auto Buy Class", false, function(state)
+    getgenv().autoBuyClass = state
+    if state then autoBuyClass() end
+end)
+
+Upgrades:Toggle("Auto Buy Boss Damage", false, function(state)
+    getgenv().autoBuyBossDamage = state
+    if state then autoBuyBossDamage() end
+end)
+
+Upgrades:Toggle("Auto Buy Aura", false, function(state)
+    getgenv().autoBuyAura = state
+    if state then autoBuyAura() end
+end)
+
+Upgrades:Toggle("Auto Buy Pet Aura", false, function(state)
+    getgenv().autoBuyPetAura = state
+    if state then autoBuyPetAura() end
+end)
+
+-- ============================================
+-- PETS TAB
+-- ============================================
+Pets:Section("Pet Management")
+
+Pets:Toggle("Auto Equip Best Pets", false, function(state)
+    getgenv().autoEquipBestPets = state
+    if state then autoEquipBestPets() end
+end)
+
+Pets:Toggle("Auto Equip Best Event Pets", false, function(state)
+    getgenv().autoEquipBestEventPets = state
+    if state then autoEquipBestEventPets() end
+end)
+
+Pets:Toggle("Auto Craft All Pets", false, function(state)
+    getgenv().autoCraftAllPets = state
+    if state then autoCraftAllPets() end
+end)
+
+Pets:Toggle("Auto Craft Best Pet", false, function(state)
+    getgenv().autoCraftBestPet = state
+    if state then autoCraftBestPet() end
+end)
+
+Pets:Toggle("Auto Teleport to Pet Shop", false, function(state)
+    getgenv().autoTeleportToPetShop = state
+    if state then autoTeleportToPetShop() end
+end)
+
+Pets:Section("Pet Deletion")
+Pets:Toggle("Auto Delete Pets", false, function(state)
+    getgenv().autoDeletePets = state
+    if state then autoDeletePets() end
+end)
+
+local rarityToggles = {
+    {Name = "Delete 1 Star", Rarity = 1},
+    {Name = "Delete 2 Star", Rarity = 2},
+    {Name = "Delete 3 Star", Rarity = 3},
+    {Name = "Delete 4 Star", Rarity = 4},
+    {Name = "Delete 5 Star", Rarity = 5},
+    {Name = "Delete 1 Moon", Rarity = 6},
+    {Name = "Delete 2 Moon", Rarity = 7},
+    {Name = "Delete 3 Moon", Rarity = 8},
+    {Name = "Delete 1 Secret", Rarity = 9}
 }
 
--- ============================================
--- TAB: MAIN
--- ============================================
-Tabs.Main:AddSection("Automation")
-Tabs.Main:AddToggle("AutoSwing", {Title = "Auto Swing", Default = false}):OnChanged(function(v) getgenv().autoSwing = v if v then autoSwing() end end)
-Tabs.Main:AddToggle("AutoSellDNA", {Title = "Auto Sell DNA", Default = false}):OnChanged(function(v) getgenv().autoSellDNA = v if v then autoSellDNA() end end)
-Tabs.Main:AddToggle("AutoCrowns", {Title = "Auto Collect Crowns", Default = false}):OnChanged(function(v) getgenv().autoCrowns = v if v then autoCollectCrowns() end end)
-Tabs.Main:AddToggle("AutoDaily", {Title = "Auto Collect Daily", Default = false}):OnChanged(function(v) getgenv().autoCollectDaily = v if v then autoCollectDaily() end end)
-
-Tabs.Main:AddSection("Boss")
-Tabs.Main:AddToggle("AutoTeleportToBoss", {Title = "Auto Teleport To Boss", Default = false}):OnChanged(function(v) getgenv().autoTeleportToBoss = v if v then autoTeleportToBoss() end end)
-Tabs.Main:AddToggle("AutoTeleportBossPremium", {Title = "Auto Teleport Boss Premium", Default = false}):OnChanged(function(v) getgenv().autoTeleportBossPremium = v if v then autoTeleportBossPremium() end end)
-Tabs.Main:AddToggle("AutoWalkBossPremium", {Title = "Auto Walk Boss Premium", Default = false}):OnChanged(function(v) getgenv().autoWalkBossPremium = v if v then autoWalkBossPremium() end end)
-Tabs.Main:AddToggle("AutoBringBoss", {Title = "Auto Bring Boss", Default = false}):OnChanged(function(v) getgenv().autoBringBoss = v if v then autoBringBoss() end end)
-
--- ============================================
--- TAB: DUNGEON
--- ============================================
-Tabs.Dungeon:AddSection("Dungeon Farm")
-Tabs.Dungeon:AddToggle("AutoJoinDungeon", {Title = "Auto Join Dungeon", Default = false}):OnChanged(function(v) getgenv().autoJoinDungeon = v if v then autoJoinDungeon() end end)
-Tabs.Dungeon:AddDropdown("SelectedDungeon", {Title = "Select Dungeon", Values = {"Space"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDungeon = v end)
-Tabs.Dungeon:AddDropdown("SelectedDifficulty", {Title = "Select Difficulty", Values = {"Normal", "Hard", "Nightmare"}, Default = 1}):OnChanged(function(v) getgenv().SelectedDifficulty = v end)
-Tabs.Dungeon:AddToggle("AutoFarmDungeon", {Title = "Auto Farm Dungeon", Default = false}):OnChanged(function(v) getgenv().autoFarmDungeon = v if v then autoFarmDungeon() end end)
-Tabs.Dungeon:AddSlider("DunFarmingDistance", {Title = "Farming Distance", Default = 6, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) getgenv().DunFarmingDistance = v end)
-
-Tabs.Dungeon:AddSection("Dungeon Eggs & Rewards")
-Tabs.Dungeon:AddToggle("AutoIncubateDungeonEgg", {Title = "Auto Incubate Dungeon Egg", Default = false}):OnChanged(function(v) getgenv().autoIncubateDungeonEgg = v if v then autoIncubateDungeonEgg() end end)
-Tabs.Dungeon:AddToggle("AutoClaimIncubatedPet", {Title = "Auto Claim Incubated Pet", Default = false}):OnChanged(function(v) getgenv().autoClaimIncubated = v if v then autoClaimIncubatedPet() end end)
-Tabs.Dungeon:AddToggle("AutoDungeonRewards", {Title = "Auto Collect Dungeon Rewards", Default = false}):OnChanged(function(v) getgenv().autoDungeonRewards = v if v then autoCollectDungeonRewards() end end)
+for _, toggleInfo in ipairs(rarityToggles) do
+    Pets:Toggle(toggleInfo.Name, false, function(state)
+        if state then
+            if not table.find(getgenv().selectedRarities, toggleInfo.Rarity) then
+                table.insert(getgenv().selectedRarities, toggleInfo.Rarity)
+            end
+            -- Immediately try to delete any matching pets the second you toggle it on
+            pcall(function()
+                deletePetsByRarity({toggleInfo.Rarity})
+            end)
+        else
+            local index = table.find(getgenv().selectedRarities, toggleInfo.Rarity)
+            if index then
+                table.remove(getgenv().selectedRarities, index)
+            end
+        end
+    end)
+end
 
 -- ============================================
--- TAB: UPGRADES
+-- ELEMENTS TAB
 -- ============================================
-Tabs.Upgrades:AddSection("Auto Buy Upgrades")
-Tabs.Upgrades:AddToggle("AutoBuySaber", {Title = "Auto Buy Saber", Default = false}):OnChanged(function(v) getgenv().autoBuySaber = v if v then autoBuySaber() end end)
-Tabs.Upgrades:AddToggle("AutoBuyDNA", {Title = "Auto Buy DNA", Default = false}):OnChanged(function(v) getgenv().autoBuyDNA = v if v then autoBuyDNA() end end)
-Tabs.Upgrades:AddToggle("AutoBuyClass", {Title = "Auto Buy Class", Default = false}):OnChanged(function(v) getgenv().autoBuyClass = v if v then autoBuyClass() end end)
-Tabs.Upgrades:AddToggle("AutoBuyBossDamage", {Title = "Auto Buy Boss Damage", Default = false}):OnChanged(function(v) getgenv().autoBuyBossDamage = v if v then autoBuyBossDamage() end end)
-Tabs.Upgrades:AddToggle("AutoBuyAura", {Title = "Auto Buy Aura", Default = false}):OnChanged(function(v) getgenv().autoBuyAura = v if v then autoBuyAura() end end)
-Tabs.Upgrades:AddToggle("AutoBuyPetAura", {Title = "Auto Buy Pet Aura", Default = false}):OnChanged(function(v) getgenv().autoBuyPetAura = v if v then autoBuyPetAura() end end)
+local tiers = {"Normal", "Advanced", "Master", "Grandmaster"}
 
-Tabs.Upgrades:AddSection("Merchants")
-Tabs.Upgrades:AddToggle("AutoBuyEventMerchant", {Title = "Auto Buy Event Merchant", Default = false}):OnChanged(function(v) getgenv().autoBuyEventMerchant = v if v then autoBuyEventMerchant() end end)
-Tabs.Upgrades:AddToggle("AutoBuyTravelingMerchant", {Title = "Auto Buy Traveling Merchant", Default = false}):OnChanged(function(v) getgenv().autoBuyTravelingMerchant = v if v then autoBuyTravelingMerchant() end end)
-
--- ============================================
--- TAB: PETS
--- ============================================
-Tabs.Pets:AddSection("Eggs")
-Tabs.Pets:AddDropdown("SelectedEgg", {Title = "Select Egg", Values = {"Starter Egg", "Forest Egg", "Cave Egg", "Volcano Egg", "Ice Egg", "Ocean Egg"}, Default = 1}):OnChanged(function(v) getgenv().SelectedEgg = v end)
-Tabs.Pets:AddToggle("AutoOpenEgg", {Title = "Auto Open Egg", Default = false}):OnChanged(function(v) getgenv().autoOpenEgg = v if v then autoOpenEgg() end end)
-Tabs.Pets:AddToggle("AutoCompletePetdex", {Title = "Auto Complete Petdex", Default = false}):OnChanged(function(v) getgenv().autoCompletePetdex = v if v then autoCompletePetdex() end end)
-Tabs.Pets:AddToggle("AutoRedeemPetdexRewards", {Title = "Auto Redeem Petdex Rewards", Default = false}):OnChanged(function(v) getgenv().autoRedeemPetdexRewards = v if v then autoRedeemPetdexRewards() end end)
-
-Tabs.Pets:AddSection("Pet Management")
-Tabs.Pets:AddToggle("AutoEquipBestPets", {Title = "Auto Equip Best Pets", Default = false}):OnChanged(function(v) getgenv().autoEquipBestPets = v if v then autoEquipBestPets() end end)
-Tabs.Pets:AddToggle("AutoEquipBestEventPets", {Title = "Auto Equip Best Event Pets", Default = false}):OnChanged(function(v) getgenv().autoEquipBestEventPets = v if v then autoEquipBestEventPets() end end)
-Tabs.Pets:AddToggle("AutoCraftAllPets", {Title = "Auto Craft All Pets", Default = false}):OnChanged(function(v) getgenv().autoCraftAllPets = v if v then autoCraftAllPets() end end)
-Tabs.Pets:AddToggle("AutoCraftBestPet", {Title = "Auto Craft Best Pet", Default = false}):OnChanged(function(v) getgenv().autoCraftBestPet = v if v then autoCraftBestPet() end end)
-
-Tabs.Pets:AddButton({
-    Title = "Teleport to Pet Shop",
-    Callback = function()
-        teleportToPetShop()
+for elementName, levels in pairs(ElementZones) do
+    Elements:Section(elementName)
+    
+    for _, tier in ipairs(tiers) do
+        if levels[tier] then
+            local flagName = string.format("autoFarm%s%s", elementName, tier)
+            getgenv()[flagName] = false
+            
+            Elements:Toggle(string.format("Farm %s (%s)", elementName, tier), false, function(state)
+                getgenv()[flagName] = state
+                if state then
+                    FarmElement(elementName, tier)
+                end
+            end)
+        end
     end
-})
+end
 
-Tabs.Pets:AddSection("Pet Deletion")
-Tabs.Pets:AddToggle("AutoDeletePets", {Title = "Auto Delete Selected Rarities", Default = false}):OnChanged(function(v) getgenv().autoDeletePets = v if v then autoDeletePets() end end)
-Tabs.Pets:AddToggle("Delete1Star", {Title = "Delete 1 Star", Default = false}):OnChanged(function(v) getgenv().delete1Star = v end)
-Tabs.Pets:AddToggle("Delete2Star", {Title = "Delete 2 Star", Default = false}):OnChanged(function(v) getgenv().delete2Star = v end)
-Tabs.Pets:AddToggle("Delete3Star", {Title = "Delete 3 Star", Default = false}):OnChanged(function(v) getgenv().delete3Star = v end)
-Tabs.Pets:AddToggle("Delete4Star", {Title = "Delete 4 Star", Default = false}):OnChanged(function(v) getgenv().delete4Star = v end)
-Tabs.Pets:AddToggle("Delete5Star", {Title = "Delete 5 Star", Default = false}):OnChanged(function(v) getgenv().delete5Star = v end)
-Tabs.Pets:AddToggle("Delete1Moon", {Title = "Delete 1 Moon", Default = false}):OnChanged(function(v) getgenv().delete1Moon = v end)
-Tabs.Pets:AddToggle("Delete2Moon", {Title = "Delete 2 Moon", Default = false}):OnChanged(function(v) getgenv().delete2Moon = v end)
+Elements:Toggle("Hide Plasma Effects", false, function(state)
+    getgenv().hidePlasmaElements = state
+    if state then hidePlasmaElements() end
+end)
 
--- ============================================
--- TAB: ELEMENTS
--- ============================================
-Tabs.Elements:AddSection("Fire Elements")
-Tabs.Elements:AddToggle("BringFireNormal", {Title = "Bring Normal Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsNormal = v if v then bringFireElementsNormal() end end)
-Tabs.Elements:AddToggle("BringFireAdvance", {Title = "Bring Advance Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsAdvance = v if v then bringFireElementsAdvance() end end)
-Tabs.Elements:AddToggle("BringFireMaster", {Title = "Bring Master Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsMaster = v if v then bringFireElementsMaster() end end)
-Tabs.Elements:AddToggle("BringFireGMaster", {Title = "Bring GMaster Fire", Default = false}):OnChanged(function(v) getgenv().bringFireElementsGMaster = v if v then bringFireElementsGMaster() end end)
-
-Tabs.Elements:AddSection("Water Elements")
-Tabs.Elements:AddToggle("BringWaterNormal", {Title = "Bring Normal Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsNormal = v if v then bringWaterElementsNormal() end end)
-Tabs.Elements:AddToggle("BringWaterAdvance", {Title = "Bring Advance Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsAdvance = v if v then bringWaterElementsAdvance() end end)
-Tabs.Elements:AddToggle("BringWaterMaster", {Title = "Bring Master Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsMaster = v if v then bringWaterElementsMaster() end end)
-Tabs.Elements:AddToggle("BringWaterGMaster", {Title = "Bring GMaster Water", Default = false}):OnChanged(function(v) getgenv().bringWaterElementsGMaster = v if v then bringWaterElementsGMaster() end end)
-
-Tabs.Elements:AddSection("Earth Elements")
-Tabs.Elements:AddToggle("BringEarthNormal", {Title = "Bring Normal Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsNormal = v if v then bringEarthElementsNormal() end end)
-Tabs.Elements:AddToggle("BringEarthAdvance", {Title = "Bring Advance Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsAdvance = v if v then bringEarthElementsAdvance() end end)
-Tabs.Elements:AddToggle("BringEarthMaster", {Title = "Bring Master Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsMaster = v if v then bringEarthElementsMaster() end end)
-Tabs.Elements:AddToggle("BringEarthGMaster", {Title = "Bring GMaster Earth", Default = false}):OnChanged(function(v) getgenv().bringEarthElementsGMaster = v if v then bringEarthElementsGMaster() end end)
-
-Tabs.Elements:AddSection("Plasma Elements")
-Tabs.Elements:AddToggle("BringPlasmaNormal", {Title = "Bring Normal Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsNormal = v if v then bringPlasmaElementsNormal() end end)
-Tabs.Elements:AddToggle("BringPlasmaAdvance", {Title = "Bring Advance Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsAdvance = v if v then bringPlasmaElementsAdvance() end end)
-Tabs.Elements:AddToggle("BringPlasmaMaster", {Title = "Bring Master Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsMaster = v if v then bringPlasmaElementsMaster() end end)
-Tabs.Elements:AddToggle("BringPlasmaGMaster", {Title = "Bring GMaster Plasma", Default = false}):OnChanged(function(v) getgenv().bringPlasmaElementsGMaster = v if v then bringPlasmaElementsGMaster() end end)
-Tabs.Elements:AddToggle("HidePlasmaElements", {Title = "Hide Plasma Elements", Default = false}):OnChanged(function(v) getgenv().hidePlasmaElements = v if v then hidePlasmaElements() end end)
-
-Tabs.Elements:AddSection("Element Teleports")
-Tabs.Elements:AddButton({Title = "TP Normal Fire", Callback = function() teleportToNormalFire() end})
-Tabs.Elements:AddButton({Title = "TP Advance Fire", Callback = function() teleportToAdvanceFire() end})
-Tabs.Elements:AddButton({Title = "TP Master Fire", Callback = function() teleportToMasterFire() end})
-Tabs.Elements:AddButton({Title = "TP GMaster Fire", Callback = function() teleportToGMasterFire() end})
-Tabs.Elements:AddButton({Title = "TP Normal Water", Callback = function() teleportToNormalWater() end})
-Tabs.Elements:AddButton({Title = "TP Advance Water", Callback = function() teleportToAdvanceWater() end})
-Tabs.Elements:AddButton({Title = "TP Master Water", Callback = function() teleportToMasterWater() end})
-Tabs.Elements:AddButton({Title = "TP GMaster Water", Callback = function() teleportToGMasterWater() end})
-Tabs.Elements:AddButton({Title = "TP Normal Earth", Callback = function() teleportToNormalEarth() end})
-Tabs.Elements:AddButton({Title = "TP Advance Earth", Callback = function() teleportToAdvanceEarth() end})
-Tabs.Elements:AddButton({Title = "TP Master Earth", Callback = function() teleportToMasterEarth() end})
-Tabs.Elements:AddButton({Title = "TP GMaster Earth", Callback = function() teleportToGMasterEarth() end})
-Tabs.Elements:AddButton({Title = "TP Normal Plasma", Callback = function() teleportToNormalPlasma() end})
-Tabs.Elements:AddButton({Title = "TP Advance Plasma", Callback = function() teleportToAdvancePlasma() end})
-Tabs.Elements:AddButton({Title = "TP Master Plasma", Callback = function() teleportToMasterPlasma() end})
-Tabs.Elements:AddButton({Title = "TP GMaster Plasma", Callback = function() teleportToGMasterPlasma() end})
+Elements:Section("Teleports")
+Elements:Button("TP to Normal Fire", teleportToNormalFire)
+Elements:Button("TP to Advanced Fire", teleportToAdvanceFire)
+Elements:Button("TP to Master Fire", teleportToMasterFire)
+Elements:Button("TP to Grandmaster Fire", teleportToGMasterFire)
+Elements:Button("TP to Normal Water", teleportToNormalWater)
+Elements:Button("TP to Advanced Water", teleportToAdvanceWater)
+Elements:Button("TP to Master Water", teleportToMasterWater)
+Elements:Button("TP to Grandmaster Water", teleportToGMasterWater)
+Elements:Button("TP to Normal Earth", teleportToNormalEarth)
+Elements:Button("TP to Advanced Earth", teleportToAdvanceEarth)
+Elements:Button("TP to Master Earth", teleportToMasterEarth)
+Elements:Button("TP to Grandmaster Earth", teleportToGMasterEarth)
+Elements:Button("TP to Normal Plasma", teleportToNormalPlasma)
+Elements:Button("TP to Advanced Plasma", teleportToAdvancePlasma)
+Elements:Button("TP to Master Plasma", teleportToMasterPlasma)
+Elements:Button("TP to Grandmaster Plasma", teleportToGMasterPlasma)
 
 -- ============================================
--- TAB: EVENTS
+-- EVENTS TAB
 -- ============================================
-Tabs.Events:AddSection("Event Automation")
-Tabs.Events:AddToggle("AutoCollectEventCurrency", {Title = "Auto Collect Event Currency", Default = false}):OnChanged(function(v) getgenv().autoCollectEventCurrency = v if v then autoCollectEventCurrency() end end)
-Tabs.Events:AddToggle("AutoTeleportToEventBoss", {Title = "Auto Teleport To Event Boss", Default = false}):OnChanged(function(v) getgenv().autoTeleportToEventBoss = v if v then autoTeleportToEventBoss() end end)
-Tabs.Events:AddToggle("AutoWalkEventBoss", {Title = "Auto Walk Event Boss", Default = false}):OnChanged(function(v) getgenv().autoWalkEventBoss = v if v then autoWalkEventBoss() end end)
+Events:Section("Event Automation")
+
+Events:Toggle("Auto Collect Event Currency", false, function(state)
+    getgenv().autoCollectEventCurrency = state
+    if state then autoCollectEventCurrency() end
+end)
+
+Events:Toggle("Auto Teleport to Event Boss", false, function(state)
+    getgenv().autoTeleportToEventBoss = state
+    if state then autoTeleportToEventBoss() end
+end)
+
+Events:Toggle("Auto Walk Event Boss", false, function(state)
+    getgenv().autoWalkEventBoss = state
+    if state then autoWalkEventBoss() end
+end)
+
+Events:Toggle("Auto Buy Event Merchant", false, function(state)
+    getgenv().autoBuyEventMerchant = state
+    if state then autoBuyEventMerchant() end
+end)
+
+Events:Toggle("Auto Buy Traveling Merchant", false, function(state)
+    getgenv().autoBuyTravelingMerchant = state
+    if state then autoBuyTravelingMerchant() end
+end)
+
+Events:Toggle("Auto Invite Top Ranks", false, function(state)
+    getgenv().autoInviteTopRanks = state
+    if state then autoInviteTopRanks() end
+end)
+
+-- TRAVELING MERCHANT DYNAMIC UI SETUP
+Events:Section("Traveling Merchant Items")
+local function setupTravelingMerchantUI()
+    local succ, merchantInfo = pcall(function()
+        return require(ReplicatedStorage.Modules.TravelingMerchantInfo)
+    end)
+    if not succ or not merchantInfo or not merchantInfo.Listings then return end
+    
+    local groupedItems = {}
+    for index, listing in pairs(merchantInfo.Listings) do
+        if listing and listing.Name then
+            local itemType = listing.Type or "Other"
+            if not groupedItems[itemType] then groupedItems[itemType] = {} end
+            table.insert(groupedItems[itemType], {Index = index, Name = listing.Name})
+        end
+    end
+    
+    for itemType, items in pairs(groupedItems) do
+        for _, item in pairs(items) do
+            local toggleName = string.format("Buy %s [%s]", item.Name, itemType)
+            getgenv()["tm_item_" .. item.Index] = false
+            
+            Events:Toggle(toggleName, false, function(state)
+                getgenv()["tm_item_" .. item.Index] = state
+            end)
+        end
+    end
+end
+pcall(setupTravelingMerchantUI)
 
 -- ============================================
--- TAB: ANTI-AFK
+-- ANTI-AFK TAB
 -- ============================================
-Tabs.AntiAFK:AddSection("Anti-AFK Settings")
-Tabs.AntiAFK:AddButton({Title = "Remove Idle Connections", Callback = function() removeIdleConnections() end})
-Tabs.AntiAFK:AddToggle("MovementAntiAFK", {Title = "Movement Anti-AFK (W Key)", Default = false}):OnChanged(function(v) getgenv().MovementAntiAFK = v if v then movementAntiAFK() end end)
-Tabs.AntiAFK:AddToggle("CombinedAntiAFK", {Title = "Combined Anti-AFK", Default = false}):OnChanged(function(v) getgenv().CombinedAntiAFK = v if v then combinedAntiAFK() end end)
-Tabs.AntiAFK:AddToggle("SimulateMovement", {Title = "Simulate Movement", Default = false}):OnChanged(function(v) getgenv().SimulateMovement = v if v then simulateMovement() end end)
-Tabs.AntiAFK:AddToggle("SimulateClick", {Title = "Simulate Click", Default = false}):OnChanged(function(v) getgenv().SimulateClick = v if v then simulateClick() end end)
-Tabs.AntiAFK:AddToggle("SimulateJump", {Title = "Simulate Jump", Default = false}):OnChanged(function(v) getgenv().SimulateJump = v if v then simulateJump() end end)
-Tabs.AntiAFK:AddDropdown("AntiAFKDirection", {Title = "Simulate Movement Direction", Values = {"Front then Back", "Back then Front", "Left then Right", "Right then Left"}, Default = 1}):OnChanged(function(v) getgenv().AntiAFKDirection = v end)
-Tabs.AntiAFK:AddSlider("AntiAFKInterval", {Title = "Anti-AFK Interval (Seconds)", Default = 60, Min = 5, Max = 300, Rounding = 0}):OnChanged(function(v) getgenv().AntiAFKInterval = v end)
+AntiAFK:Section("Anti-AFK Methods")
+
+AntiAFK:Toggle("Remove Idle Connections", false, function(state)
+    if state then removeIdleConnections() end
+end)
+
+AntiAFK:Toggle("Movement Anti-AFK", false, function(state)
+    getgenv().MovementAntiAFK = state
+    if state then movementAntiAFK() end
+end)
+
+AntiAFK:Toggle("Simulate Movement", false, function(state)
+    getgenv().SimulateMovement = state
+    if state then simulateMovement() end
+end)
+
+AntiAFK:Dropdown("Movement Direction", {"Front then Back", "Back then Front", "Left then Right", "Right then Left"}, function(selected)
+    getgenv().AntiAFKDirection = selected
+end)
+
+AntiAFK:Toggle("Simulate Click", false, function(state)
+    getgenv().SimulateClick = state
+    if state then simulateClick() end
+end)
+
+AntiAFK:Toggle("Simulate Jump", false, function(state)
+    getgenv().SimulateJump = state
+    if state then simulateJump() end
+end)
+
+AntiAFK:Toggle("Combined Anti-AFK", false, function(state)
+    getgenv().CombinedAntiAFK = state
+    if state then combinedAntiAFK() end
+end)
+
+AntiAFK:Slider("Anti-AFK Interval (seconds)", 30, 300, 60, function(value)
+    getgenv().AntiAFKInterval = value
+end)
 
 -- ============================================
--- TAB: MISC
+-- MISC TAB
 -- ============================================
-Tabs.Misc:AddSection("Character Modifiers")
-Tabs.Misc:AddToggle("ChangeWalkSpeed", {Title = "Custom Walk Speed", Default = false}):OnChanged(function(v) getgenv().changeWalkSpeed = v if v then changeWalkSpeed() end end)
-Tabs.Misc:AddSlider("WalkSpeedValue", {Title = "Walk Speed Value", Default = 45, Min = 16, Max = 200, Rounding = 0}):OnChanged(function(v) getgenv().WalkSpeedValue = v end)
-Tabs.Misc:AddToggle("InfiniteJump", {Title = "Infinite Jump", Default = false}):OnChanged(function(v) getgenv().infiniteJump = v if v then infiniteJump() end end)
+Misc:Section("Miscellaneous")
 
-Tabs.Misc:AddSection("Visual Tweaks")
-Tabs.Misc:AddToggle("HideVisualEffects", {Title = "Hide Visual Effects", Default = false}):OnChanged(function(v) getgenv().hideVisualEffects = v if v then hideVisualEffects() end end)
-Tabs.Misc:AddToggle("HideNameRankUI", {Title = "Hide/Modify Name Rank UI", Default = false}):OnChanged(function(v) getgenv().hideNameRankUI = v if v then hideNameRankUI() end end)
+Misc:Toggle("Change Walk Speed", false, function(state)
+    getgenv().changeWalkSpeed = state
+    if state then changeWalkSpeed() end
+end)
 
-Tabs.Misc:AddSection("Custom Teleport")
-Tabs.Misc:AddButton({Title = "Save Current Location", Callback = function() saveCurrentLocation() end})
-Tabs.Misc:AddButton({Title = "Teleport To Saved Location", Callback = function() teleportToSavedLocation() end})
-Tabs.Misc:AddToggle("AutoTeleportToSavedLocation", {Title = "Loop Teleport To Saved", Default = false}):OnChanged(function(v) getgenv().autoTeleportToSavedLocation = v if v then autoTeleportToSavedLocation() end end)
+Misc:Slider("Walk Speed Value", 16, 500, 45, function(value)
+    getgenv().WalkSpeedValue = value
+end)
 
-Tabs.Misc:AddSection("Clan & Quest")
-Tabs.Misc:AddToggle("AutoInviteTopRanks", {Title = "Auto Invite Top Ranks", Default = false}):OnChanged(function(v) getgenv().autoInviteTopRanks = v if v then autoInviteTopRanks() end end)
-Tabs.Misc:AddToggle("AutoQuestExecute", {Title = "Execute Highest Priority Quest", Default = false}):OnChanged(function(v) getgenv().autoQuestExecute = v if v then executeHighestPriorityQuest() end end)
-Tabs.Misc:AddButton({Title = "Print Priority Debug", Callback = function() printPriorityDebug() end})
+Misc:Toggle("Hide Visual Effects", false, function(state)
+    getgenv().hideVisualEffects = state
+    if state then hideVisualEffects() end
+end)
 
--- ============================================
--- FLUENT LITE SETUP COMPLETE
--- ============================================
-Window:SelectTab(1)
+Misc:Toggle("Hide Name/Rank UI", false, function(state)
+    getgenv().hideNameRankUI = state
+    if state then hideNameRankUI() end
+end)
 
-Fluent:Notify({
-    Title = "Hub Loaded",
-    Content = "Saber Simulator script is ready!",
-    Duration = 5
-})
+Misc:Toggle("Infinite Jump", false, function(state)
+    getgenv().infiniteJump = state
+    if state then infiniteJump() end
+end)
+
+Misc:Section("Location")
+
+Misc:Button("Save Current Location", saveCurrentLocation)
+
+Misc:Toggle("Auto TP to Saved Location", false, function(state)
+    getgenv().autoTeleportToSavedLocation = state
+    if state then autoTeleportToSavedLocation() end
+end)
+
+Misc:Button("Teleport to Saved Location", teleportToSavedLocation)
+
+Misc:Button("Teleport to Pet Shop", teleportToPetShop)
+
+Window:Notification("BloodV3 Loaded", "success")
