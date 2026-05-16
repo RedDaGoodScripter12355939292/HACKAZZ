@@ -79,6 +79,12 @@ local Whitelisted = {
     ["Golden The Antimatter"] = true,
     ["Rainbow The Antimatter"] = true,
     ["Void The Antimatter"] = true,
+    ["Golden Singularity"] = true,
+    ["Shiny Singularity"] = true,
+    ["Rainbow Singularity"] = true,
+    ["Void Singularity"] = true,
+    ["Void Galactic Majesty"] = true,
+    ["Rainbow Galactic Majesty"] = true,
 }
 
 local function AddWhitelistedPets()
