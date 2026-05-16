@@ -1556,7 +1556,7 @@ Dungeon:Toggle("Auto Farm Dungeon", false, function(state)
     if state then autoFarmDungeon() end
 end)
 
-Dungeon:Slider("Farming Distance", 2, 20, 6, function(value)
+Dungeon:Slider("Farming Distance", 2, 20, 7, function(value)
     getgenv().DunFarmingDistance = value
 end)
 
@@ -1574,7 +1574,7 @@ Dungeon:Toggle("Auto Claim Incubated Pet", false, function(state)
     if state then autoClaimIncubatedPet() end
 end)
 
-Dungeon:Toggle("Auto Incubate Dungeon Egg (Smart Replace)", false, function(state)
+Dungeon:Toggle("Auto Incubate Dungeon Egg (Maintenance)", false, function(state)
     getgenv().autoIncubateDungeonEgg = state
     if state then autoIncubateDungeonEgg() end
 end)
