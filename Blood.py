@@ -20,9 +20,8 @@ REPO_OWNER = 'RedDaGoodScripter12355939292'
 REPO_NAME = 'HACKAZZ'
 FILE_PATH = 'Authorization.lua'
 COOLDOWN_TIME = 2 * 60 * 60
-GITHUB_TOKEN = os.getenv("GITHUB")
 
-g = Github(GITHUB_TOKEN)
+g = os.getenv("GITHUB")
 repo = g.get_repo(f"{REPO_OWNER}/{REPO_NAME}")
 
 try:
