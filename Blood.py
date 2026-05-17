@@ -16,8 +16,6 @@ from bs4 import BeautifulSoup
 file_path = 'accounts.txt'
 permission_mode = 0o666
 VERIFICATION_ROLE_ID = 1223469040278962287
-
-GITHUB_TOKEN = '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'
 REPO_OWNER = 'RedDaGoodScripter12355939292'
 REPO_NAME = 'HACKAZZ'
 FILE_PATH = 'Authorization.lua'
@@ -610,6 +608,8 @@ async def on_command_error(ctx, error):
 async def main():
     await bot.add_cog(AuthCog(bot))
 
+DISCORD_TOKEE = os.getenv("BOT_TOKEN")
+
 if __name__ == "__main__":
     asyncio.run(main())
-    bot.run(DISCORD_TOKEN)
+    bot.run(DISCORD_TOKEE)
