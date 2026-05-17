@@ -21,8 +21,10 @@ REPO_NAME = 'HACKAZZ'
 FILE_PATH = 'Authorization.lua'
 COOLDOWN_TIME = 2 * 60 * 60
 
-g = os.getenv("GITHUB")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+g = Github(GITHUB_TOKEN)
 repo = g.get_repo(f"{REPO_OWNER}/{REPO_NAME}")
+
 
 try:
     # Change the file permissions
