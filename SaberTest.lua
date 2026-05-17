@@ -170,7 +170,7 @@ local function GetEggPriority(imageId)
             end
         end
     end
-    return 0, "UNKNOWN" -- Unknown eggs are treated as lowest priority
+    return 0, "UNKNOWN"
 end
 
 -- DUNGEON FUNCTIONS
@@ -233,26 +233,19 @@ end
 
 function autoFarmDungeon()
     task.spawn(function()
-
-        local Players = game:GetService("Players")
         local lp = Players.LocalPlayer
-
         local savedCFrame = nil
 
         while getgenv().autoFarmDungeon do
             pcall(function()
-
                 local char = lp.Character
                 if not char then return end
 
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 local charRoot = char:FindFirstChild("HumanoidRootPart")
 
-                if not hum or not charRoot then
-                    return
-                end
+                if not hum or not charRoot then return end
 
-                -- SAVE ORIGINAL ROTATION ONCE
                 if not savedCFrame then
                     savedCFrame = charRoot.CFrame
                 end
@@ -265,22 +258,14 @@ function autoFarmDungeon()
 
                 for _, mapFolder in pairs(dungeonStorage:GetChildren()) do
                     local importantFolder = mapFolder:FindFirstChild("Important")
-
                     if importantFolder then
                         for _, spawner in pairs(importantFolder:GetChildren()) do
-
-                            if spawner:IsA("BasePart")
-                            and spawner.Name:lower():find("spawner") then
-
+                            if spawner:IsA("BasePart") and spawner.Name:lower():find("spawner") then
                                 for _, mob in pairs(spawner:GetChildren()) do
-
                                     if mob:IsA("Model") then
                                         local hrp = mob:FindFirstChild("HumanoidRootPart")
-
                                         if hrp then
-                                            local d =
-                                                (charRoot.Position - hrp.Position).Magnitude
-
+                                            local d = (charRoot.Position - hrp.Position).Magnitude
                                             if d < dist then
                                                 dist = d
                                                 closest = hrp
@@ -294,49 +279,30 @@ function autoFarmDungeon()
                 end
 
                 if closest then
-
-                    local targetPos =
-                        closest.Position +
-                        Vector3.new(0, getgenv().DunFarmingDistance or 6, 0)
-
+                    local targetPos = closest.Position + Vector3.new(0, getgenv().DunFarmingDistance or 6, 0)
                     hum.AutoRotate = false
-
-                    -- FACE DOWN ABOVE ENEMY
-                    charRoot.CFrame =
-                        CFrame.new(targetPos) *
-                        CFrame.Angles(math.rad(-90), 0, 0)
-
+                    charRoot.CFrame = CFrame.new(targetPos) * CFrame.Angles(math.rad(-90), 0, 0)
                     charRoot.AssemblyLinearVelocity = Vector3.zero
                 end
-
             end)
-
             task.wait()
         end
 
-        -- RESET EVERYTHING AFTER FARM OFF
         pcall(function()
-
             local char = lp.Character
             if not char then return end
-
             local hum = char:FindFirstChildOfClass("Humanoid")
             local hrp = char:FindFirstChild("HumanoidRootPart")
-
             if hum then
                 hum.AutoRotate = true
                 hum.PlatformStand = false
                 hum:ChangeState(Enum.HumanoidStateType.Running)
             end
-
             if hrp then
-                hrp.CFrame =
-                    CFrame.new(hrp.Position + Vector3.new(0, 5, 0))
-
+                hrp.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 5, 0))
                 hrp.AssemblyLinearVelocity = Vector3.zero
             end
         end)
-
     end)
 end
 
@@ -349,17 +315,13 @@ function autoCollectDungeonRewards()
                     for _, mapFolder in pairs(dungeonStorage:GetChildren()) do
                         for _, desc in pairs(mapFolder:GetDescendants()) do
                             if desc:IsA("ProximityPrompt") and desc.ActionText == "Claim Rewards" and desc.Enabled then
-                                
-                                -- 1. Auto Teleport to the chest
                                 if Players.LocalPlayer.Character and desc.Parent and desc.Parent:IsA("BasePart") then
                                     local charRoot = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                                     if charRoot then
                                         charRoot.CFrame = desc.Parent.CFrame + Vector3.new(0, 5, 0)
-                                        task.wait(0.3) -- Tiny wait so the server registers your new position
+                                        task.wait(0.3)
                                     end
                                 end
-                                
-                                -- 2. Claim the chest
                                 fireproximityprompt(desc)
                             end
                         end
@@ -376,80 +338,88 @@ function autoIncubateDungeonEgg()
         while getgenv().autoIncubateDungeonEgg do
             pcall(function()
                 local playerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
-                if playerGui then
-                    local mainGui = playerGui:FindFirstChild("MainGui")
-                    if mainGui then
-                        local otherFrames = mainGui:FindFirstChild("OtherFrames")
-                        if otherFrames then
-                            local replacePopup = otherFrames:FindFirstChild("EggIncubatorReplacePopup")
-                            
-                            -- SMART REPLACEMENT LOGIC (If the popup appears because incubator is full)
-                            if replacePopup and replacePopup.Visible then
-                                local newEggPriority = 0
-                                local worstPriority = math.huge
-                                local worstEggFrame = nil
+                if not playerGui then return end
+                local mainGui = playerGui:FindFirstChild("MainGui")
+                if not mainGui then return end
+                local otherFrames = mainGui:FindFirstChild("OtherFrames")
+                if not otherFrames then return end
+
+                -- STEP 1: Check if the DungeonRewards UI is visible (We got an egg!)
+                local dungeonRewards = otherFrames:FindFirstChild("DungeonRewards")
+                if dungeonRewards and dungeonRewards.Visible then
+                    local yesBtn = dungeonRewards:FindFirstChild("Frame") 
+                        and dungeonRewards.Frame:FindFirstChild("Buttons") 
+                        and dungeonRewards.Frame.Buttons:FindFirstChild("Yes") 
+                        and dungeonRewards.Frame.Buttons.Yes:FindFirstChild("Button")
+                        
+                    if yesBtn then
+                        firesignal(yesBtn.MouseButton1Click)
+                        task.wait(0.5)
+                    end
+                end
+
+                -- STEP 2: Check if the Replace Popup appeared (Incubator was full)
+                local replacePopup = otherFrames:FindFirstChild("EggIncubatorReplacePopup")
+                if replacePopup and replacePopup.Visible then
+                    local newEggPriority = 0
+                    local worstPriority = math.huge
+                    local worstEggFrame = nil
+                    
+                    local itemFrame = replacePopup:FindFirstChild("Frame") and replacePopup.Frame:FindFirstChild("ItemFrame")
+                    if itemFrame then
+                        for _, slot in pairs(itemFrame:GetChildren()) do
+                            if slot:IsA("Frame") and slot:FindFirstChild("ImageLabel") then
+                                local priority, _ = GetEggPriority(slot.ImageLabel.Image)
+                                local replaceButton = slot:FindFirstChild("Replace")
                                 
-                                local itemFrame = replacePopup:FindFirstChild("Frame") and replacePopup.Frame:FindFirstChild("ItemFrame")
-                                if itemFrame then
-                                    for _, slot in pairs(itemFrame:GetChildren()) do
-                                        if slot:IsA("Frame") and slot:FindFirstChild("ImageLabel") then
-                                            local priority, _ = GetEggPriority(slot.ImageLabel.Image)
-                                            local replaceButton = slot:FindFirstChild("Replace")
-                                            
-                                            -- If it has a "Replace" button, it's an OLD egg currently incubating
-                                            if replaceButton then
-                                                if priority < worstPriority then
-                                                    worstPriority = priority
-                                                    worstEggFrame = slot
-                                                end
-                                            else
-                                                -- If no replace button, this is the NEW egg we just got
-                                                if priority > newEggPriority then
-                                                    newEggPriority = priority
-                                                end
-                                            end
-                                        end
+                                if replaceButton then
+                                    if priority < worstPriority then
+                                        worstPriority = priority
+                                        worstEggFrame = slot
                                     end
-                                end
-                                
-                                -- If the new egg is better than the worst old egg, replace it!
-                                if worstEggFrame and newEggPriority > worstPriority then
-                                    local replaceButton = worstEggFrame:FindFirstChild("Replace")
-                                    if replaceButton and replaceButton:FindFirstChild("Button") then
-                                        firesignal(replaceButton.Button.MouseButton1Click)
-                                        task.wait(0.2)
-                                        
-                                        -- Confirm the replacement on the popup
-                                        local popupFrame = otherFrames:FindFirstChild("PopupFrame")
-                                        if popupFrame and popupFrame.Visible then
-                                            local yesBtn = popupFrame:FindFirstChild("Frame") and popupFrame.Frame:FindFirstChild("Buttons") and popupFrame.Frame.Buttons:FindFirstChild("Yes") and popupFrame.Frame.Buttons.Yes:FindFirstChild("Button")
-                                            if yesBtn then
-                                                firesignal(yesBtn.MouseButton1Click)
-                                                task.wait(0.5)
-                                                firesignal(yesBtn.MouseButton1Click) -- Spam confirm just in case
-                                            end
-                                        end
+                                else
+                                    if priority > newEggPriority then
+                                        newEggPriority = priority
                                     end
                                 end
                             end
                         end
                     end
-                end
-                
-                -- NORMAL INCUBATION LOGIC (If there are empty slots)
-                local ps = Players.LocalPlayer:FindFirstChild("PlayerScripts")
-                if ps then
-                    local dataManager = require(ps.MainClient.ClientDataManager)
-                    local hatchery = dataManager.Data and dataManager.Data.DungeonHatchery
-                    if hatchery then
-                        for slot, data in pairs(hatchery) do
-                            if data and data.CanIncubate then
-                                ReplicatedStorage.Events.UIAction:FireServer("IncubateDungeonEgg", slot)
+                    
+                    if worstEggFrame and newEggPriority > worstPriority then
+                        local replaceButton = worstEggFrame:FindFirstChild("Replace")
+                        if replaceButton and replaceButton:FindFirstChild("Button") then
+                            firesignal(replaceButton.Button.MouseButton1Click)
+                            task.wait(0.2)
+                            
+                            local popupFrame = otherFrames:FindFirstChild("PopupFrame")
+                            if popupFrame and popupFrame.Visible then
+                                local yesBtn = popupFrame:FindFirstChild("Frame") and popupFrame.Frame:FindFirstChild("Buttons") and popupFrame.Frame.Buttons:FindFirstChild("Yes") and popupFrame.Frame.Buttons.Yes:FindFirstChild("Button")
+                                if yesBtn then
+                                    firesignal(yesBtn.MouseButton1Click)
+                                    task.wait(0.5)
+                                    firesignal(yesBtn.MouseButton1Click)
+                                end
                             end
                         end
                     end
                 end
             end)
+            
+            -- NORMAL INCUBATION LOGIC (If there are empty slots)
+            local ps = Players.LocalPlayer:FindFirstChild("PlayerScripts")
+            if ps then
+                local dataManager = require(ps.MainClient.ClientDataManager)
+                local hatchery = dataManager.Data and dataManager.Data.DungeonHatchery
+                if hatchery then
+                    for slot, data in pairs(hatchery) do
+                        if data and data.CanIncubate then
+                            ReplicatedStorage.Events.UIAction:FireServer("IncubateDungeonEgg", slot)
+                        end
+                    end
+                end
+            end
+            
             task.wait(1)
         end
     end)
@@ -1574,7 +1544,7 @@ Dungeon:Toggle("Auto Claim Incubated Pet", false, function(state)
     if state then autoClaimIncubatedPet() end
 end)
 
-Dungeon:Toggle("Auto Incubate Dungeon Egg (Maintenance)", false, function(state)
+Dungeon:Toggle("Auto Incubate Dungeon Egg", false, function(state)
     getgenv().autoIncubateDungeonEgg = state
     if state then autoIncubateDungeonEgg() end
 end)
