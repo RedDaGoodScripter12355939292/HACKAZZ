@@ -1,1 +1,6 @@
-
+discord.py
+aiofiles
+PyGithub
+aiohttp
+requests
+beautifulsoup4
