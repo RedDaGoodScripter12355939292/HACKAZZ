@@ -2189,7 +2189,7 @@ Dungeon:Toggle("Auto Farm Dungeon", false, function(state)
     if state then autoFarmDungeon() end
 end)
 
-Dungeon:Slider("Farming Distance", 2, 20, 7, function(value)
+Dungeon:Slider("Farming Distance", 2, 20, 8, function(value)
     getgenv().DunFarmingDistance = value
 end)
 
