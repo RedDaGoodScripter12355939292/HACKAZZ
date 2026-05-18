@@ -8,7 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
-
+getgenv().currentFarmingElement = nil
 -- ============================================
 -- ALL FUNCTIONS
 -- ============================================
@@ -16,7 +16,7 @@ local HttpService = game:GetService("HttpService")
 -- ANTI-AFK FUNCTIONS
 function removeIdleConnections()
     if getconnections then
-        local connections = get_signal_cons(Players.LocalPlayer.Idled)
+        local connections = getconnections(Players.LocalPlayer.Idled) -- Fixed typo here (was get_signal_cons)
         for _, connection in pairs(connections or {}) do
             if connection.Disable then
                 connection:Disable(connection)
@@ -26,7 +26,7 @@ function removeIdleConnections()
         end
     end
     
-    if not get_signal_cons then
+    if not getconnections then
         local virtualUser = cloneref(game:GetService("VirtualUser"))
         Players.LocalPlayer.Idled:Connect(function()
             virtualUser:CaptureController()
@@ -689,10 +689,16 @@ function autoOpenEgg()
                     local horizontalDistance = Vector2.new(charRoot.Position.X - petShopLocation.CFrame.Position.X, charRoot.Position.Z - petShopLocation.CFrame.Position.Z).Magnitude
                     if horizontalDistance > 5 then
                         charRoot.CFrame = petShopLocation.CFrame
+                        task.wait(0.15) -- CRITICAL: Wait for server to register your new position!
                     end
-                    if getgenv().SelectedEggIsHere then
-                        ReplicatedStorage.Events.UIAction:FireServer("BuyEgg", getgenv().SelectedEggIsHere)
+                    
+                    -- Default to Wooden Egg if no egg is selected
+                    local eggToHatch = getgenv().SelectedEggIsHere
+                    if not eggToHatch or eggToHatch == "" then
+                        eggToHatch = "Wooden Egg"
                     end
+                    
+                    ReplicatedStorage.Events.UIAction:FireServer("BuyEgg", eggToHatch)
                 end
             end
             task.wait(0.1)
@@ -884,31 +890,69 @@ function autoDeletePets()
     end)
 end
 
--- ELEMENT FARMING FUNCTIONS
+-- ============================================
+-- ELEMENT FARMING FUNCTIONS (FIXED YIELD ISSUE)
+-- ============================================
 local ElementZones = {
     Fire = {
         Normal = function() return workspace.Gameplay.Map.ElementZones.Fire.Fire end,
-        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedFireArea", 10).Important:WaitForChild("Fire", 10) end,
-        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterFireArea", 10).Important:WaitForChild("Fire", 10) end,
-        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterFireArea", 10).Important:WaitForChild("Fire", 10) end
+        Advanced = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedFireArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Fire")
+        end,
+        Master = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("MasterFireArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Fire")
+        end,
+        Grandmaster = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("GrandmasterFireArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Fire")
+        end
     },
     Water = {
         Normal = function() return workspace.Gameplay.Map.ElementZones.Water.Water end,
-        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedWaterArea", 10).Important:WaitForChild("Water", 10) end,
-        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterWaterArea", 10).Important:WaitForChild("Water", 10) end,
-        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterWaterArea", 10).Important:WaitForChild("Water", 10) end
+        Advanced = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedWaterArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Water")
+        end,
+        Master = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("MasterWaterArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Water")
+        end,
+        Grandmaster = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("GrandmasterWaterArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Water")
+        end
     },
     Earth = {
         Normal = function() return workspace.Gameplay.Map.ElementZones.Earth.Model.Earth end,
-        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedEarthArea", 10).Important:WaitForChild("Earth", 10) end,
-        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterEarthArea", 10).Important:WaitForChild("Earth", 10) end,
-        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterEarthArea", 10).Important:WaitForChild("Earth", 10) end
+        Advanced = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedEarthArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Earth")
+        end,
+        Master = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("MasterEarthArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Earth")
+        end,
+        Grandmaster = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("GrandmasterEarthArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Earth")
+        end
     },
     Plasma = {
         Normal = function() return workspace.Gameplay.Map.ElementZones.Plasma.Plasma end,
-        Advanced = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("AdvancedPlasmaArea", 10).Important:WaitForChild("Plasma", 10) end,
-        Master = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("MasterPlasmaArea", 10).Important:WaitForChild("Plasma", 10) end,
-        Grandmaster = function() return workspace.Gameplay.RegionsLoaded:WaitForChild("GrandmasterPlasmaArea", 10).Important:WaitForChild("Plasma", 10) end
+        Advanced = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedPlasmaArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Plasma")
+        end,
+        Master = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("MasterPlasmaArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Plasma")
+        end,
+        Grandmaster = function() 
+            local a = workspace.Gameplay.RegionsLoaded:FindFirstChild("GrandmasterPlasmaArea")
+            return a and a:FindFirstChild("Important") and a.Important:FindFirstChild("Plasma")
+        end
     }
 }
 
@@ -926,14 +970,25 @@ function FarmElement(elementName, level)
                             local success, zoneFolder = pcall(getZoneFolder)
                             
                             if success and zoneFolder then
-                                -- 1. Keep player inside the zone area so damage registers
+                                local zonePos = nil
+                                local zoneCFrame = nil
                                 if zoneFolder:IsA("BasePart") then
-                                    charRoot.CFrame = zoneFolder.CFrame + Vector3.new(0, 3, 0)
+                                    zonePos = zoneFolder.Position
+                                    zoneCFrame = zoneFolder.CFrame + Vector3.new(0, 3, 0)
                                 elseif zoneFolder:IsA("Model") and zoneFolder.PrimaryPart then
-                                    charRoot.CFrame = zoneFolder.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
+                                    zonePos = zoneFolder.PrimaryPart.Position
+                                    zoneCFrame = zoneFolder.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
+                                end
+
+                                -- FIX: Only teleport if horizontally > 10 studs away (stops shaking)
+                                if zonePos and zoneCFrame then
+                                    local horizontalDist = (Vector3.new(charRoot.Position.X, 0, charRoot.Position.Z) - Vector3.new(zonePos.X, 0, zonePos.Z)).Magnitude
+                                    if horizontalDist > 10 then
+                                        charRoot.CFrame = zoneCFrame
+                                    end
                                 end
                                 
-                                -- 2. Bring the enemies to the player
+                                -- FIX: Instantly bring elements (no delay)
                                 for _, child in pairs(zoneFolder:GetChildren()) do
                                     if child:FindFirstChild("HumanoidRootPart") then
                                         child.HumanoidRootPart.Anchored = true
@@ -1055,6 +1110,11 @@ function autoWalkEventBoss()
             task.wait(0.3)
         end
     end)
+end
+
+-- Placeholder for missing function
+function autoBuyEventMerchant()
+    -- Add event merchant logic here if needed
 end
 
 -- MISC FUNCTIONS
@@ -1335,24 +1395,605 @@ function autoInviteTopRanks()
     end)
 end
 
--- QUEST & PRIORITY FUNCTIONS
+local DEBUG = true
+
+local function qprint(...)
+    if DEBUG then
+        print("[AUTO QUEST]", ...)
+    end
+end
+
+local function qwarn(...)
+    warn("[AUTO QUEST]", ...)
+end
+
+-- ============================================
+-- CONFIG
+-- ============================================
+
+local ELEMENTS = {"Fire", "Water", "Earth", "Plasma"}
+local TIERS = {"Grandmaster", "Master", "Advanced", "Normal"}
+
+-- ============================================
+-- HELPERS
+-- ============================================
+
+local function getChar()
+    local char = Players.LocalPlayer.Character
+    if not char then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+
+    if not root or not hum then return end
+    return char, root, hum
+end
+
+local function getZoneFolders()
+    local folders = {}
+
+    for _, element in ipairs(ELEMENTS) do
+        local tierTable = ElementZones[element]
+        if tierTable then
+            for _, tier in ipairs(TIERS) do
+                local getter = tierTable[tier]
+                if getter then
+                    local ok, folder = pcall(getter)
+                    if ok and folder then
+                        table.insert(folders, folder)
+                    end
+                end
+            end
+        end
+    end
+
+    return folders
+end
+
+-- ============================================
+-- BOSS FARM
+-- ============================================
+
+function QuestFarmBossWalk()
+    local _, charRoot, humanoid = getChar()
+    if not charRoot then return end
+
+    local bossRoot = getBossData()
+    if not bossRoot then
+        qwarn("Boss not found")
+        return
+    end
+
+    local dist =
+        (Vector3.new(charRoot.Position.X, 0, charRoot.Position.Z) -
+         Vector3.new(bossRoot.Position.X, 0, bossRoot.Position.Z)).Magnitude
+
+    if dist > 50 then
+        charRoot.CFrame = bossRoot.CFrame + Vector3.new(0, 3, 0)
+
+    elseif dist > 8 then
+        humanoid:MoveTo(bossRoot.Position)
+
+    else
+        humanoid:MoveTo(charRoot.Position)
+    end
+end
+
+-- ============================================
+-- EGG FARM
+-- ============================================
+
+function QuestFarmEgg()
+    local _, charRoot = getChar()
+    if not charRoot then return end
+
+    if not getgenv().SelectedEggIsHere then return end
+
+    local petShop = workspace.Gameplay.Locations:FindFirstChild("PetShop")
+    if petShop then
+        charRoot.CFrame = petShop.CFrame + Vector3.new(0, 3, 0)
+    end
+
+    ReplicatedStorage.Events.UIAction:FireServer(
+        "BuyEgg",
+        getgenv().SelectedEggIsHere
+    )
+end
+
+-- ============================================
+-- DUNGEON FARM
+-- ============================================
+
+function QuestFarmDungeon()
+    local lp = Players.LocalPlayer
+
+    local dungeonStorage = workspace:FindFirstChild("DungeonStorage")
+    local inDungeon = false
+
+    if dungeonStorage then
+        for _, folder in ipairs(dungeonStorage:GetChildren()) do
+            if #folder:GetChildren() > 0 then
+                inDungeon = true
+                break
+            end
+        end
+    end
+
+    if inDungeon then
+        qprint("Already in dungeon")
+        return
+    end
+
+    local dataManager = require(lp.PlayerScripts.MainClient.ClientDataManager)
+    local timeManager = require(lp.PlayerScripts.MainClient.DateTimeManager)
+
+    local cooldownEnd = dataManager.Data and dataManager.Data.DungeonCooldownEndDT or 0
+    if timeManager:Now() < cooldownEnd then
+        qprint("Dungeon cooldown active")
+        return
+    end
+
+    local dungeon = getgenv().SelectedDungeon or "Space"
+    local diff = getgenv().SelectedDifficulty or 1
+
+    qprint("Starting dungeon:", dungeon, diff)
+
+    ReplicatedStorage.Events.UIAction:FireServer(
+        "DungeonGroupAction",
+        "Create",
+        "Public",
+        dungeon,
+        diff
+    )
+
+    task.wait(1.5)
+
+    ReplicatedStorage.Events.UIAction:FireServer(
+        "DungeonGroupAction",
+        "Start"
+    )
+end
+
+-- ============================================
+-- KOTH FARM
+-- ============================================
+
+function QuestFarmKOTH()
+    local _, charRoot = getChar()
+    if not charRoot then return end
+
+    local koth = workspace.Gameplay:FindFirstChild("KOTH")
+    if not koth then return end
+
+    local boundary = koth:FindFirstChild("KOH_BOUNDARY")
+    if not boundary then return end
+
+    local ring =
+        boundary:FindFirstChild("Meshes/ring")
+        or boundary:FindFirstChild("ring")
+
+    if ring then
+        qprint("Moving to KOTH")
+        charRoot.CFrame = ring.CFrame + Vector3.new(0, 3, 0)
+    end
+end
+
+-- ============================================
+-- FLAG FARM
+-- ============================================
+
+-- ============================================
+-- ELEMENT FARM (MAIN OPTIMIZED VERSION)
+-- ============================================
+
+getgenv().currentFarmingFolder = nil
+
+function FarmAnyAvailableElement(needsBoss)
+    local _, charRoot = getChar()
+    if not charRoot then return end
+
+    -- STEP 1: Check if we are already committed to a folder that still has targets
+    if getgenv().currentFarmingFolder and getgenv().currentFarmingFolder.Parent then
+        local hasTargets = false
+        for _, obj in ipairs(getgenv().currentFarmingFolder:GetChildren()) do
+            local root = obj:FindFirstChild("HumanoidRootPart")
+            -- ONLY check for HumanoidRootPart, no Humanoid health check!
+            if root then
+                if not needsBoss or obj.Name:lower():find("boss") then
+                    hasTargets = true
+                    -- Bring to player instantly
+                    root.Anchored = true
+                    root.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
+                end
+            end
+        end
+
+        if hasTargets then
+            -- Stay in the zone
+            local zonePos = nil
+            local zoneCFrame = nil
+            if getgenv().currentFarmingFolder:IsA("BasePart") then
+                zonePos = getgenv().currentFarmingFolder.Position
+                zoneCFrame = getgenv().currentFarmingFolder.CFrame + Vector3.new(0, 3, 0)
+            elseif getgenv().currentFarmingFolder:IsA("Model") and getgenv().currentFarmingFolder.PrimaryPart then
+                zonePos = getgenv().currentFarmingFolder.PrimaryPart.Position
+                zoneCFrame = getgenv().currentFarmingFolder.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
+            end
+
+            if zonePos and zoneCFrame then
+                local horizontalDist = (Vector3.new(charRoot.Position.X, 0, charRoot.Position.Z) - Vector3.new(zonePos.X, 0, zonePos.Z)).Magnitude
+                if horizontalDist > 10 then
+                    charRoot.CFrame = zoneCFrame
+                end
+            end
+            return -- DO NOT switch to another element yet, stay committed!
+        else
+            -- Folder is empty/dead, clear commitment
+            getgenv().currentFarmingFolder = nil
+        end
+    end
+
+    -- STEP 2: If not committed (or committed zone is cleared), find the highest priority element
+    for _, element in ipairs(ELEMENTS) do
+        local tiers = ElementZones[element]
+        if tiers then
+            for _, tier in ipairs(TIERS) do
+                local getter = tiers[tier]
+                if getter then
+                    local ok, folder = pcall(getter)
+                    if ok and folder then
+                        local targets = {}
+                        for _, obj in ipairs(folder:GetChildren()) do
+                            local root = obj:FindFirstChild("HumanoidRootPart")
+                            -- ONLY check for HumanoidRootPart
+                            if root then
+                                if not needsBoss or obj.Name:lower():find("boss") then
+                                    table.insert(targets, root)
+                                end
+                            end
+                        end
+
+                        if #targets > 0 then
+                            getgenv().currentFarmingFolder = folder -- Commit to this exact folder!
+                            
+                            local zonePos = nil
+                            local zoneCFrame = nil
+                            if folder:IsA("BasePart") then
+                                zonePos = folder.Position
+                                zoneCFrame = folder.CFrame + Vector3.new(0, 3, 0)
+                            elseif folder:IsA("Model") and folder.PrimaryPart then
+                                zonePos = folder.PrimaryPart.Position
+                                zoneCFrame = folder.PrimaryPart.CFrame + Vector3.new(0, 3, 0)
+                            end
+
+                            if zonePos and zoneCFrame then
+                                local horizontalDist = (Vector3.new(charRoot.Position.X, 0, charRoot.Position.Z) - Vector3.new(zonePos.X, 0, zonePos.Z)).Magnitude
+                                if horizontalDist > 10 then
+                                    charRoot.CFrame = zoneCFrame
+                                end
+                            end
+
+                            for _, t in ipairs(targets) do
+                                t.Anchored = true
+                                t.CFrame = charRoot.CFrame * CFrame.new(0, 0, -2)
+                            end
+
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- ============================================
+-- FAST LOOPS
+-- ============================================
+
+getgenv().QuestFarmElementActive = false
+getgenv().QuestFarmBossActive = false
+
+function QuestElementFastLoop()
+    task.spawn(function()
+        qprint("Element loop started")
+
+        while getgenv().QuestFarmElementActive and getgenv().autoQuestExecute do
+            pcall(FarmAnyAvailableElement, false)
+            task.wait()
+        end
+
+        qprint("Element loop stopped")
+    end)
+end
+
+function QuestBossFastLoop()
+    task.spawn(function()
+        qprint("Boss loop started")
+
+        while getgenv().QuestFarmBossActive and getgenv().autoQuestExecute do
+            pcall(QuestFarmBossWalk)
+            task.wait(0.3)
+        end
+
+        qprint("Boss loop stopped")
+    end)
+end
+
+-- ============================================
+-- MAIN AUTO QUEST LOOP
+-- ============================================
+
+getgenv().questDungeonActive = false
+
+local function startQuestDungeonAutomation()
+    if not getgenv().questDungeonActive then
+        getgenv().questDungeonActive = true
+        qprint("Auto-activating Dungeon features for Quest")
+        
+        getgenv().autoJoinDungeon = true
+        autoJoinDungeon()
+        
+        getgenv().autoFarmDungeon = true
+        autoFarmDungeon()
+        
+        getgenv().autoDungeonRewards = true
+        autoCollectDungeonRewards()
+        
+        getgenv().autoIncubateDungeonEgg = true
+        autoIncubateDungeonEgg()
+        
+        getgenv().autoClaimIncubated = true
+        autoClaimIncubatedPet()
+    end
+end
+
+local function stopQuestDungeonAutomation()
+    if getgenv().questDungeonActive then
+        getgenv().questDungeonActive = false
+        qprint("Quest done, deactivating Auto-Dungeon features")
+        
+        getgenv().autoJoinDungeon = false
+        getgenv().autoFarmDungeon = false
+        getgenv().autoDungeonRewards = false
+        getgenv().autoIncubateDungeonEgg = false
+        getgenv().autoClaimIncubated = false
+    end
+end
+
+getgenv().questEggActive = false
+
+local function startQuestEggAutomation()
+    if not getgenv().questEggActive then
+        getgenv().questEggActive = true
+        qprint("Auto-activating Egg features for Quest")
+        
+        getgenv().autoOpenEgg = true
+        autoOpenEgg()
+    end
+end
+
+local function stopQuestEggAutomation()
+    if getgenv().questEggActive then
+        getgenv().questEggActive = false
+        qprint("Quest done, deactivating Auto-Egg features")
+        
+        getgenv().autoOpenEgg = false
+    end
+end
+
+function startAutoQuestLoop()
+    task.spawn(function()
+        qprint("Quest loop started")
+
+        while getgenv().autoQuestExecute do
+
+            local success, err = pcall(function()
+
+                local ClientDataManager =
+                    require(Players.LocalPlayer.PlayerScripts.MainClient.ClientDataManager)
+
+                local QuestInfo =
+                    require(ReplicatedStorage.Modules.QuestInfo)
+
+                local quests = ClientDataManager.Data and ClientDataManager.Data.ClanQuests
+                if not quests then task.wait(1) return end
+
+                -- ============================================
+                -- STEP 1: AUTO CLAIM COMPLETED QUESTS
+                -- ============================================
+                for questIndex, q in pairs(quests) do -- Changed to pairs
+                    local cfg = QuestInfo.ClanQuests[q.Id]
+                    if cfg and q.Amount >= cfg.GoalAmount then
+                        qprint("Quest completed! Claiming reward for index:", questIndex)
+                        pcall(function()
+                            ReplicatedStorage.Events.UIAction:FireServer("ClaimClanQuest", questIndex)
+                        end)
+                        task.wait(1)
+                        return -- Restart loop immediately to refresh the quest list
+                    end
+                end
+
+                -- ============================================
+                -- STEP 2: FIND ACTIVE QUEST & HANDLE SKIPPING
+                -- ============================================
+                local detected = nil
+                local questText = ""
+
+                for questIndex, q in pairs(quests) do -- Changed to pairs
+                    local cfg = QuestInfo.ClanQuests[q.Id]
+
+                    if cfg and q.Amount < cfg.GoalAmount then
+                        local typeCfg = QuestInfo.QuestTypes[cfg.QuestType]
+                        local currentDetected = nil
+                        local text = ""
+
+                        if typeCfg then
+                            local ok, txt = pcall(function()
+                                return typeCfg.InfoText(q.Amount, cfg.GoalAmount, cfg)
+                            end)
+
+                            if ok and txt then
+                                text = tostring(txt):lower()
+
+                                if text:find("element") and text:find("boss") then
+                                    currentDetected = "elementboss"
+                                elseif text:find("fire")
+                                    or text:find("water")
+                                    or text:find("earth")
+                                    or text:find("plasma")
+                                    or text:find("element") then
+                                    currentDetected = "element"
+                                elseif text:find("boss") then
+                                    currentDetected = "boss"
+                                elseif text:find("egg") or text:find("hatch") then
+                                    currentDetected = "egg"
+                                elseif text:find("dungeon") then
+                                    currentDetected = "dungeon"
+                                elseif text:find("koth") or text:find("king of the hill") then
+                                    currentDetected = "koth"
+                                elseif text:find("flag") then
+                                    currentDetected = "flag"
+                                end
+                            else
+                                -- Fallback: If reading text fails, guess from the QuestType name
+                                local qType = tostring(cfg.QuestType):lower()
+                                if qType:find("element") then currentDetected = "element"
+                                elseif qType:find("boss") then currentDetected = "boss"
+                                elseif qType:find("egg") or qType:find("hatch") then currentDetected = "egg"
+                                elseif qType:find("dungeon") then currentDetected = "dungeon"
+                                elseif qType:find("koth") then currentDetected = "koth"
+                                elseif qType:find("flag") then currentDetected = "flag"
+                                end
+                            end
+                        end
+
+                        if currentDetected then
+                            local shouldSkipThis = false
+                            
+                            if (currentDetected == "elementboss" or currentDetected == "element") and getgenv().skipElementQuest then shouldSkipThis = true end
+                            if currentDetected == "boss" and getgenv().skipBossQuest then shouldSkipThis = true end
+                            if currentDetected == "egg" and getgenv().skipEggQuest then shouldSkipThis = true end
+                            if currentDetected == "dungeon" and getgenv().skipDungeonQuest then shouldSkipThis = true end
+                            if currentDetected == "koth" and getgenv().skipKOTHQuest then shouldSkipThis = true end
+                            if currentDetected == "flag" and getgenv().skipFlagQuest then shouldSkipThis = true end
+
+                            if shouldSkipThis then
+                                qprint("Found", currentDetected, "quest but it is marked for skip.")
+                            else
+                                -- If we aren't skipping this quest and haven't found one to do yet, select it!
+                                if not detected then
+                                    qprint("Found valid quest:", currentDetected)
+                                    detected = currentDetected
+                                    questText = text
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- ============================================
+                -- STEP 3: EXECUTE QUEST LOGIC
+                -- ============================================
+                if detected then
+                    qprint("Executing quest type:", detected)
+                else
+                    qprint("No valid quest found (or all are skipped). Idling...")
+                end
+
+                if detected == "dungeon" then
+                    if questText:find("impossible") then
+                        getgenv().SelectedDifficulty = 4
+                    elseif questText:find("hard") then
+                        getgenv().SelectedDifficulty = 3
+                    elseif questText:find("medium") then
+                        getgenv().SelectedDifficulty = 2
+                    elseif questText:find("easy") then
+                        getgenv().SelectedDifficulty = 1
+                    end
+                    
+                    stopQuestEggAutomation()
+                    startQuestDungeonAutomation()
+                    QuestFarmDungeon()
+                    
+                elseif detected == "egg" then
+                    stopQuestDungeonAutomation()
+                    startQuestEggAutomation()
+
+                elseif detected == "elementboss" then
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    getgenv().currentFarmingElement = nil
+                    FarmAnyAvailableElement(true)
+                    FarmAnyAvailableElement(false)
+
+                elseif detected == "element" then
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    getgenv().currentFarmingElement = nil
+                    FarmAnyAvailableElement(false)
+
+                elseif detected == "boss" then
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    getgenv().currentFarmingElement = nil
+                    QuestFarmBossWalk()
+
+                elseif detected == "koth" then
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    getgenv().currentFarmingElement = nil
+                    QuestFarmKOTH()
+
+                elseif detected == "flag" then
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    getgenv().currentFarmingElement = nil
+                    QuestFarmFlags()
+
+                else
+                    -- No quest detected, or all are skipped. Just idle.
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    getgenv().currentFarmingElement = nil
+                    task.wait(1)
+                end
+            end)
+
+            if not success then
+                qwarn("Quest loop error:", err)
+                task.wait(1)
+            end
+            
+            task.wait(0.1)
+        end
+
+        stopQuestDungeonAutomation()
+        stopQuestEggAutomation()
+        getgenv().currentFarmingElement = nil
+        qprint("Quest loop stopped")
+    end)
+end
+
+-- QUEST & PRIORITY FUNCTIONS (For Debug Button)
 function getHighestPriorityQuest()
     local quests = {
-        { name = "Dungeon Farm", priority = 100, enabled = function() return getgenv().autoFarmDungeon end, available = function() return Players.LocalPlayer:GetAttribute("DungeonId") ~= nil end },
-        { name = "Fire Farm Beta", priority = 99, enabled = function() return getgenv().FireFarmBeta end, available = function() return getgenv().FireFarmBetaAlive ~= false end },
-        { name = "Water Farm Beta", priority = 89, enabled = function() return getgenv().WaterFarmBeta end, available = function() return getgenv().WaterFarmBetaAlive ~= false end },
-        { name = "Earth Farm Beta", priority = 79, enabled = function() return getgenv().EarthFarmBeta end, available = function() return getgenv().EarthFarmBetaAlive ~= false end },
-        { name = "Plasma Farm", priority = 69, enabled = function() return getgenv().NewElementPlasmaFarmingMethodAll or getgenv().NewElementPlasmaFarmingMethodGAll end, available = function() return true end },
-        { name = "Boss Killer Premium Walk", priority = 95, enabled = function() return getgenv().autoWalkBossPremium end, available = function() return getgenv().BossKillerPremWlkAlive ~= false end },
-        { name = "Boss Killer Premium", priority = 94, enabled = function() return getgenv().autoTeleportBossPremium end, available = function() return true end },
-        { name = "Boss Killer", priority = 93, enabled = function() return getgenv().autoTeleportToBoss end, available = function() return true end },
-        { name = "Event Boss Walk", priority = 85, enabled = function() return getgenv().autoWalkEventBoss end, available = function() return getgenv().BossKillerPremWlkeventAlive ~= false end },
-        { name = "Event Boss", priority = 84, enabled = function() return getgenv().autoTeleportToEventBoss end, available = function() return true end },
-        { name = "Auto Equip Pets", priority = 50, enabled = function() return getgenv().autoEquipBestPets or getgenv().autoEquipBestEventPets end, available = function() return true end },
-        { name = "Auto Sell DNA", priority = 40, enabled = function() return getgenv().autoSellDNA end, available = function() return true end },
-        { name = "Auto Swing", priority = 30, enabled = function() return getgenv().autoSwing end, available = function() return true end },
-        { name = "Auto Collect Crowns", priority = 20, enabled = function() return getgenv().autoCrowns end, available = function() return true end },
-        { name = "Auto Open Egg", priority = 10, enabled = function() return getgenv().autoOpenEgg end, available = function() return getgenv().SelectedEgg ~= nil end }
+        { name = "Dungeon Farm", priority = 100, enabled = function() return getgenv().autoFarmDungeon end, available = function() return true end },
+        { name = "Boss Killer Premium Walk", priority = 95, enabled = function() return getgenv().autoWalkBossPremium end, available = function() return true end },
+        { name = "Boss Killer (Bring)", priority = 94, enabled = function() return getgenv().autoBringBoss end, available = function() return true end },
+        { name = "Boss Killer (Teleport)", priority = 93, enabled = function() return getgenv().autoTeleportToBoss end, available = function() return true end },
+        { name = "Event Boss Walk", priority = 85, enabled = function() return getgenv().autoWalkEventBoss end, available = function() return true end },
+        { name = "Event Boss (Teleport)", priority = 84, enabled = function() return getgenv().autoTeleportToEventBoss end, available = function() return true end },
+        { name = "Fire Elements", priority = 79, enabled = function() return getgenv().autoFarmFireNormal or getgenv().autoFarmFireAdvanced or getgenv().autoFarmFireMaster or getgenv().autoFarmFireGrandmaster end, available = function() return true end },
+        { name = "Water Elements", priority = 78, enabled = function() return getgenv().autoFarmWaterNormal or getgenv().autoFarmWaterAdvanced or getgenv().autoFarmWaterMaster or getgenv().autoFarmWaterGrandmaster end, available = function() return true end },
+        { name = "Earth Elements", priority = 77, enabled = function() return getgenv().autoFarmEarthNormal or getgenv().autoFarmEarthAdvanced or getgenv().autoFarmEarthMaster or getgenv().autoFarmEarthGrandmaster end, available = function() return true end },
+        { name = "Plasma Elements", priority = 76, enabled = function() return getgenv().autoFarmPlasmaNormal or getgenv().autoFarmPlasmaAdvanced or getgenv().autoFarmPlasmaMaster or getgenv().autoFarmPlasmaGrandmaster end, available = function() return true end },
+        { name = "Auto Complete Petdex", priority = 60, enabled = function() return getgenv().autoCompletePetdex end, available = function() return true end },
+        { name = "Auto Open Egg", priority = 50, enabled = function() return getgenv().autoOpenEgg end, available = function() return true end },
+        { name = "Auto Equip Pets", priority = 40, enabled = function() return getgenv().autoEquipBestPets or getgenv().autoEquipBestEventPets end, available = function() return true end },
+        { name = "Auto Sell DNA", priority = 30, enabled = function() return getgenv().autoSellDNA end, available = function() return true end },
+        { name = "Auto Swing", priority = 20, enabled = function() return getgenv().autoSwing end, available = function() return true end },
+        { name = "Auto Collect Crowns", priority = 10, enabled = function() return getgenv().autoCrowns end, available = function() return true end }
     }
     table.sort(quests, function(a, b) return a.priority > b.priority end)
     for _, quest in pairs(quests) do
@@ -1365,36 +2006,28 @@ function getHighestPriorityQuest()
     return nil
 end
 
-function executeHighestPriorityQuest()
-    spawn(function()
-        while getgenv().autoQuestExecute and task do
-            local quest = getHighestPriorityQuest()
-            if quest then
-                print("Executing:", quest.name, "Priority:", quest.priority)
-            end
-            task.wait(1)
-        end
-    end)
-end
-
 function printPriorityDebug()
     local quests = {
-        { name = "Dungeon Farm", priority = 100, enabled = function() return getgenv().autoFarmDungeon end, available = function() return Players.LocalPlayer:GetAttribute("DungeonId") ~= nil end },
-        { name = "Fire Farm Beta", priority = 99, enabled = function() return getgenv().FireFarmBeta end, available = function() return getgenv().FireFarmBetaAlive ~= false end },
-        { name = "Water Farm Beta", priority = 89, enabled = function() return getgenv().WaterFarmBeta end, available = function() return getgenv().WaterFarmBetaAlive ~= false end },
-        { name = "Earth Farm Beta", priority = 79, enabled = function() return getgenv().EarthFarmBeta end, available = function() return getgenv().EarthFarmBetaAlive ~= false end },
-        { name = "Plasma Farm", priority = 69, enabled = function() return getgenv().NewElementPlasmaFarmingMethodAll or getgenv().NewElementPlasmaFarmingMethodGAll end, available = function() return true end },
-        { name = "Boss Killer Premium Walk", priority = 95, enabled = function() return getgenv().autoWalkBossPremium end, available = function() return getgenv().BossKillerPremWlkAlive ~= false end },
-        { name = "Boss Killer Premium", priority = 94, enabled = function() return getgenv().autoTeleportBossPremium end, available = function() return true end },
-        { name = "Boss Killer", priority = 93, enabled = function() return getgenv().autoTeleportToBoss end, available = function() return true end },
-        { name = "Auto Swing", priority = 30, enabled = function() return getgenv().autoSwing end, available = function() return true end },
-        { name = "Auto Sell DNA", priority = 40, enabled = function() return getgenv().autoSellDNA end, available = function() return true end },
-        { name = "Auto Crowns", priority = 20, enabled = function() return getgenv().autoCrowns end, available = function() return true end },
-        { name = "Auto Open Egg", priority = 10, enabled = function() return getgenv().autoOpenEgg end, available = function() return getgenv().SelectedEgg ~= nil end }
+        { name = "Dungeon Farm", priority = 100, enabled = function() return getgenv().autoFarmDungeon end, available = function() return true end },
+        { name = "Boss Killer Premium Walk", priority = 95, enabled = function() return getgenv().autoWalkBossPremium end, available = function() return true end },
+        { name = "Boss Killer (Bring)", priority = 94, enabled = function() return getgenv().autoBringBoss end, available = function() return true end },
+        { name = "Boss Killer (Teleport)", priority = 93, enabled = function() return getgenv().autoTeleportToBoss end, available = function() return true end },
+        { name = "Event Boss Walk", priority = 85, enabled = function() return getgenv().autoWalkEventBoss end, available = function() return true end },
+        { name = "Event Boss (Teleport)", priority = 84, enabled = function() return getgenv().autoTeleportToEventBoss end, available = function() return true end },
+        { name = "Fire Elements", priority = 79, enabled = function() return getgenv().autoFarmFireNormal or getgenv().autoFarmFireAdvanced or getgenv().autoFarmFireMaster or getgenv().autoFarmFireGrandmaster end, available = function() return true end },
+        { name = "Water Elements", priority = 78, enabled = function() return getgenv().autoFarmWaterNormal or getgenv().autoFarmWaterAdvanced or getgenv().autoFarmWaterMaster or getgenv().autoFarmWaterGrandmaster end, available = function() return true end },
+        { name = "Earth Elements", priority = 77, enabled = function() return getgenv().autoFarmEarthNormal or getgenv().autoFarmEarthAdvanced or getgenv().autoFarmEarthMaster or getgenv().autoFarmEarthGrandmaster end, available = function() return true end },
+        { name = "Plasma Elements", priority = 76, enabled = function() return getgenv().autoFarmPlasmaNormal or getgenv().autoFarmPlasmaAdvanced or getgenv().autoFarmPlasmaMaster or getgenv().autoFarmPlasmaGrandmaster end, available = function() return true end },
+        { name = "Auto Complete Petdex", priority = 60, enabled = function() return getgenv().autoCompletePetdex end, available = function() return true end },
+        { name = "Auto Open Egg", priority = 50, enabled = function() return getgenv().autoOpenEgg end, available = function() return true end },
+        { name = "Auto Equip Pets", priority = 40, enabled = function() return getgenv().autoEquipBestPets or getgenv().autoEquipBestEventPets end, available = function() return true end },
+        { name = "Auto Sell DNA", priority = 30, enabled = function() return getgenv().autoSellDNA end, available = function() return true end },
+        { name = "Auto Swing", priority = 20, enabled = function() return getgenv().autoSwing end, available = function() return true end },
+        { name = "Auto Collect Crowns", priority = 10, enabled = function() return getgenv().autoCrowns end, available = function() return true end }
     }
     table.sort(quests, function(a, b) return a.priority > b.priority end)
     print("================ Priority Debug ================")
-    print(string.format("%-40s %-8s %-10s %-10s", "Action", "Priority", "Enabled", "Available"))
+    print(string.format("%-35s %-8s %-10s %-10s", "Action", "Priority", "Enabled", "Available"))
     print(string.rep("-", 65))
     local currentQuest = getHighestPriorityQuest()
     for _, quest in pairs(quests) do
@@ -1402,7 +2035,7 @@ function printPriorityDebug()
         local isAvailable = pcall(quest.available)
         local selected = ""
         if currentQuest and currentQuest.name == quest.name then selected = " <--" end
-        print(string.format("%-40s %-8d %-10s %-10s%s", quest.name, quest.priority, tostring(isEnabled), tostring(isAvailable), selected))
+        print(string.format("%-35s %-8d %-10s %-10s%s", quest.name, quest.priority, tostring(isEnabled), tostring(isAvailable), selected))
     end
     print("================================================\n")
     if currentQuest then
@@ -1431,9 +2064,10 @@ local Window = m0dznv1:CreateWindow({
 })
 
 -- ============================================
--- TABS
+-- TABS (Organized for best user experience)
 -- ============================================
 local Main = Window:Tab("Main")
+local Quests = Window:Tab("Quests")
 local Boss = Window:Tab("Boss")
 local Dungeon = Window:Tab("Dungeon")
 local Eggs = Window:Tab("Eggs")
@@ -1447,16 +2081,11 @@ local Misc = Window:Tab("Misc")
 -- ============================================
 -- MAIN TAB (Core Farming)
 -- ============================================
-Main:Section("Farming")
+Main:Section("Core Farming")
 
 Main:Toggle("Auto Swing", false, function(state)
     getgenv().autoSwing = state
     if state then autoSwing() end
-end)
-
-Main:Toggle("Auto Collect Crowns", false, function(state)
-    getgenv().autoCrowns = state
-    if state then autoCollectCrowns() end
 end)
 
 Main:Toggle("Auto Sell DNA", false, function(state)
@@ -1464,21 +2093,53 @@ Main:Toggle("Auto Sell DNA", false, function(state)
     if state then autoSellDNA() end
 end)
 
+Main:Toggle("Auto Collect Crowns", false, function(state)
+    getgenv().autoCrowns = state
+    if state then autoCollectCrowns() end
+end)
+
 Main:Toggle("Auto Collect Daily", false, function(state)
     getgenv().autoCollectDaily = state
     if state then autoCollectDaily() end
 end)
 
-Main:Section("Quest System")
+-- ============================================
+-- QUESTS TAB (Smart Auto Quest)
+-- ============================================
+Quests:Section("Clan Quests")
 
-Main:Toggle("Auto Execute Priority Quest (WIP)", false, function(state)
-    if state then
-        Window:Notification("This feature is Work In Progress!", "error")
-    end
-    getgenv().autoQuestExecute = false 
+Quests:Toggle("Auto Clan Quests", false, function(state)
+    getgenv().autoQuestExecute = state
+    if state then startAutoQuestLoop() end
 end)
 
-Main:Button("Print Priority Debug", function()
+Quests:Section("Skip Specific Quests")
+
+Quests:Toggle("Skip Element Quests", false, function(state)
+    getgenv().skipElementQuest = state
+end)
+
+Quests:Toggle("Skip Boss Quests", false, function(state)
+    getgenv().skipBossQuest = state
+end)
+
+Quests:Toggle("Skip Egg Quests", false, function(state)
+    getgenv().skipEggQuest = state
+end)
+
+Quests:Toggle("Skip Dungeon Quests", false, function(state)
+    getgenv().skipDungeonQuest = state
+end)
+
+Quests:Toggle("Skip KOTH Quests", false, function(state)
+    getgenv().skipKOTHQuest = state
+end)
+
+Quests:Toggle("Skip Flag Quests", false, function(state)
+    getgenv().skipFlagQuest = state
+end)
+
+Quests:Button("Print Priority Debug", function()
     printPriorityDebug()
 end)
 
@@ -1505,7 +2166,7 @@ end)
 -- ============================================
 -- DUNGEON TAB
 -- ============================================
-Dungeon:Section("Dungeon Automation")
+Dungeon:Section("Dungeon Setup")
 
 Dungeon:Toggle("Auto Join Dungeon", false, function(state)
     getgenv().autoJoinDungeon = state
@@ -1520,6 +2181,8 @@ Dungeon:Dropdown("Select Difficulty", {"Easy", "Medium", "Hard", "Impossible"}, 
     local difficultyMap = {["Easy"] = 1, ["Medium"] = 2, ["Hard"] = 3, ["Impossible"] = 4}
     getgenv().SelectedDifficulty = difficultyMap[selected] or 1
 end)
+
+Dungeon:Section("Dungeon Farming")
 
 Dungeon:Toggle("Auto Farm Dungeon", false, function(state)
     getgenv().autoFarmDungeon = state
@@ -1537,14 +2200,14 @@ end)
 
 Dungeon:Button("Teleport to Chest", teleportToChest)
 
-Dungeon:Section("Incubator")
+Dungeon:Section("Dungeon Incubator")
 
 Dungeon:Toggle("Auto Claim Incubated Pet", false, function(state)
     getgenv().autoClaimIncubated = state
     if state then autoClaimIncubatedPet() end
 end)
 
-Dungeon:Toggle("Auto Incubate Dungeon Egg", false, function(state)
+Dungeon:Toggle("Auto Incubate Egg (Smart Replace)", false, function(state)
     getgenv().autoIncubateDungeonEgg = state
     if state then autoIncubateDungeonEgg() end
 end)
@@ -1555,9 +2218,7 @@ end)
 Eggs:Section("Egg Hatching")
 
 local eggList, eggMap = fetchEggShopList()
-if eggList[1] and eggMap[eggList[1]] then
-    getgenv().SelectedEggIsHere = eggMap[eggList[1]]
-end
+getgenv().SelectedEggIsHere = "Wooden Egg"
 
 Eggs:Dropdown("Select Egg", eggList, function(selected)
     getgenv().SelectedEggIsHere = eggMap[selected]
@@ -1579,6 +2240,73 @@ Eggs:Toggle("Auto Redeem Petdex Rewards", false, function(state)
     getgenv().autoRedeemPetdexRewards = state
     if state then autoRedeemPetdexRewards() end
 end)
+
+-- ============================================
+-- PETS TAB
+-- ============================================
+Pets:Section("Pet Management")
+
+Pets:Toggle("Auto Equip Best Pets", false, function(state)
+    getgenv().autoEquipBestPets = state
+    if state then autoEquipBestPets() end
+end)
+
+Pets:Toggle("Auto Equip Best Event Pets", false, function(state)
+    getgenv().autoEquipBestEventPets = state
+    if state then autoEquipBestEventPets() end
+end)
+
+Pets:Toggle("Auto Craft All Pets", false, function(state)
+    getgenv().autoCraftAllPets = state
+    if state then autoCraftAllPets() end
+end)
+
+Pets:Toggle("Auto Craft Best Pet", false, function(state)
+    getgenv().autoCraftBestPet = state
+    if state then autoCraftBestPet() end
+end)
+
+Pets:Toggle("Auto Teleport to Pet Shop", false, function(state)
+    getgenv().autoTeleportToPetShop = state
+    if state then autoTeleportToPetShop() end
+end)
+
+Pets:Section("Pet Deletion")
+
+Pets:Toggle("Auto Delete Pets", false, function(state)
+    getgenv().autoDeletePets = state
+    if state then autoDeletePets() end
+end)
+
+local rarityToggles = {
+    {Name = "Delete 1 Star", Rarity = 1},
+    {Name = "Delete 2 Star", Rarity = 2},
+    {Name = "Delete 3 Star", Rarity = 3},
+    {Name = "Delete 4 Star", Rarity = 4},
+    {Name = "Delete 5 Star", Rarity = 5},
+    {Name = "Delete 1 Moon", Rarity = 6},
+    {Name = "Delete 2 Moon", Rarity = 7},
+    {Name = "Delete 3 Moon", Rarity = 8},
+    {Name = "Delete 1 Secret", Rarity = 9}
+}
+
+for _, toggleInfo in ipairs(rarityToggles) do
+    Pets:Toggle(toggleInfo.Name, false, function(state)
+        if state then
+            if not table.find(getgenv().selectedRarities, toggleInfo.Rarity) then
+                table.insert(getgenv().selectedRarities, toggleInfo.Rarity)
+            end
+            pcall(function()
+                deletePetsByRarity({toggleInfo.Rarity})
+            end)
+        else
+            local index = table.find(getgenv().selectedRarities, toggleInfo.Rarity)
+            if index then
+                table.remove(getgenv().selectedRarities, index)
+            end
+        end
+    end)
+end
 
 -- ============================================
 -- UPGRADES TAB
@@ -1616,73 +2344,6 @@ Upgrades:Toggle("Auto Buy Pet Aura", false, function(state)
 end)
 
 -- ============================================
--- PETS TAB
--- ============================================
-Pets:Section("Pet Management")
-
-Pets:Toggle("Auto Equip Best Pets", false, function(state)
-    getgenv().autoEquipBestPets = state
-    if state then autoEquipBestPets() end
-end)
-
-Pets:Toggle("Auto Equip Best Event Pets", false, function(state)
-    getgenv().autoEquipBestEventPets = state
-    if state then autoEquipBestEventPets() end
-end)
-
-Pets:Toggle("Auto Craft All Pets", false, function(state)
-    getgenv().autoCraftAllPets = state
-    if state then autoCraftAllPets() end
-end)
-
-Pets:Toggle("Auto Craft Best Pet", false, function(state)
-    getgenv().autoCraftBestPet = state
-    if state then autoCraftBestPet() end
-end)
-
-Pets:Toggle("Auto Teleport to Pet Shop", false, function(state)
-    getgenv().autoTeleportToPetShop = state
-    if state then autoTeleportToPetShop() end
-end)
-
-Pets:Section("Pet Deletion")
-Pets:Toggle("Auto Delete Pets", false, function(state)
-    getgenv().autoDeletePets = state
-    if state then autoDeletePets() end
-end)
-
-local rarityToggles = {
-    {Name = "Delete 1 Star", Rarity = 1},
-    {Name = "Delete 2 Star", Rarity = 2},
-    {Name = "Delete 3 Star", Rarity = 3},
-    {Name = "Delete 4 Star", Rarity = 4},
-    {Name = "Delete 5 Star", Rarity = 5},
-    {Name = "Delete 1 Moon", Rarity = 6},
-    {Name = "Delete 2 Moon", Rarity = 7},
-    {Name = "Delete 3 Moon", Rarity = 8},
-    {Name = "Delete 1 Secret", Rarity = 9}
-}
-
-for _, toggleInfo in ipairs(rarityToggles) do
-    Pets:Toggle(toggleInfo.Name, false, function(state)
-        if state then
-            if not table.find(getgenv().selectedRarities, toggleInfo.Rarity) then
-                table.insert(getgenv().selectedRarities, toggleInfo.Rarity)
-            end
-            -- Immediately try to delete any matching pets the second you toggle it on
-            pcall(function()
-                deletePetsByRarity({toggleInfo.Rarity})
-            end)
-        else
-            local index = table.find(getgenv().selectedRarities, toggleInfo.Rarity)
-            if index then
-                table.remove(getgenv().selectedRarities, index)
-            end
-        end
-    end)
-end
-
--- ============================================
 -- ELEMENTS TAB
 -- ============================================
 local tiers = {"Normal", "Advanced", "Master", "Grandmaster"}
@@ -1707,10 +2368,10 @@ end
 
 Elements:Toggle("Hide Plasma Effects", false, function(state)
     getgenv().hidePlasmaElements = state
-    if state then hidePlasmaElements() end
+    if state then hidePlasmaEffects() end
 end)
 
-Elements:Section("Teleports")
+Elements:Section("Element Teleports")
 Elements:Button("TP to Normal Fire", teleportToNormalFire)
 Elements:Button("TP to Advanced Fire", teleportToAdvanceFire)
 Elements:Button("TP to Master Fire", teleportToMasterFire)
@@ -1838,7 +2499,7 @@ end)
 -- ============================================
 -- MISC TAB
 -- ============================================
-Misc:Section("Miscellaneous")
+Misc:Section("Character")
 
 Misc:Toggle("Change Walk Speed", false, function(state)
     getgenv().changeWalkSpeed = state
@@ -1849,6 +2510,13 @@ Misc:Slider("Walk Speed Value", 16, 500, 45, function(value)
     getgenv().WalkSpeedValue = value
 end)
 
+Misc:Toggle("Infinite Jump", false, function(state)
+    getgenv().infiniteJump = state
+    if state then infiniteJump() end
+end)
+
+Misc:Section("Visuals")
+
 Misc:Toggle("Hide Visual Effects", false, function(state)
     getgenv().hideVisualEffects = state
     if state then hideVisualEffects() end
@@ -1857,11 +2525,6 @@ end)
 Misc:Toggle("Hide Name/Rank UI", false, function(state)
     getgenv().hideNameRankUI = state
     if state then hideNameRankUI() end
-end)
-
-Misc:Toggle("Infinite Jump", false, function(state)
-    getgenv().infiniteJump = state
-    if state then infiniteJump() end
 end)
 
 Misc:Section("Location")
