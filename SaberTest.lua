@@ -1582,6 +1582,80 @@ end
 -- FLAG FARM
 -- ============================================
 
+getgenv().currentFarmingFlagBase = nil
+getgenv().flagCommitTime = 0
+getgenv().flagCooldownUntil = 0
+
+function QuestFarmFlags()
+    local char, charRoot = getChar()
+    if not charRoot then return false end
+
+    local flags = workspace.Gameplay:FindFirstChild("Flags")
+    if not flags then return false end
+
+    -- STEP 1: If we are already committing to a flag, STAY on it for 25 seconds no matter what
+    if getgenv().currentFarmingFlagBase and getgenv().currentFarmingFlagBase.Parent then
+        local timeOnFlag = tick() - (getgenv().flagCommitTime or 0)
+        
+        -- Force stay for 25 seconds (15 + 10 extra), even if name already changed
+        if timeOnFlag < 25 then
+            if (charRoot.Position - getgenv().currentFarmingFlagBase.Position).Magnitude > 10 then
+                charRoot.CFrame = getgenv().currentFarmingFlagBase.CFrame + Vector3.new(0, 3, 0)
+            end
+            return false -- Still waiting on this flag
+        end
+    end
+
+    -- STEP 2: 25 seconds have passed, check if there are any other unowned flags
+    local unOwnedFlagBase = nil
+
+    for _, flag in ipairs(flags:GetChildren()) do
+        local base = flag:FindFirstChild("Base")
+        local pole = flag:FindFirstChild("Flag")
+
+        if base and pole then
+            local gui = pole:FindFirstChildWhichIsA("BillboardGui")
+
+            if gui then
+                local isOwnedByUs = false
+                
+                for _, desc in ipairs(gui:GetDescendants()) do
+                    if desc:IsA("TextLabel") and desc.Text then
+                        if tostring(desc.Text):find(Players.LocalPlayer.DisplayName) then
+                            isOwnedByUs = true
+                            break
+                        end
+                    end
+                end
+
+                if not isOwnedByUs then
+                    unOwnedFlagBase = base
+                    break 
+                end
+            end
+        end
+    end
+
+    -- STEP 3: Decide what to do next
+    if unOwnedFlagBase then
+        -- Found a new unowned flag, commit to it for 25 seconds
+        getgenv().currentFarmingFlagBase = unOwnedFlagBase
+        getgenv().flagCommitTime = tick()
+        qprint("Found unowned flag. Committing for 25 seconds.")
+        
+        if (charRoot.Position - unOwnedFlagBase.Position).Magnitude > 10 then
+            charRoot.CFrame = unOwnedFlagBase.CFrame + Vector3.new(0, 3, 0)
+        end
+        return false
+        
+    else
+        -- ALL FLAGS ARE OURS! Start cooldown so we can do other quests while waiting
+        qprint("All flags captured! Starting 30s cooldown to do other quests...")
+        getgenv().flagCooldownUntil = tick() + 30
+        return true 
+    end
+end
+
 -- ============================================
 -- ELEMENT FARM (MAIN OPTIMIZED VERSION)
 -- ============================================
@@ -1782,6 +1856,11 @@ local function stopQuestEggAutomation()
     end
 end
 
+getgenv().questCommitment = nil
+getgenv().questCommitmentId = nil
+getgenv().bossQuestHitTime = 0
+getgenv().bossQuestHitId = nil
+
 function startAutoQuestLoop()
     task.spawn(function()
         qprint("Quest loop started")
@@ -1802,13 +1881,19 @@ function startAutoQuestLoop()
                 -- ============================================
                 -- STEP 1: AUTO CLAIM COMPLETED QUESTS
                 -- ============================================
-                for questIndex, q in pairs(quests) do -- Changed to pairs
+                for questIndex, q in pairs(quests) do
                     local cfg = QuestInfo.ClanQuests[q.Id]
                     if cfg and q.Amount >= cfg.GoalAmount then
                         qprint("Quest completed! Claiming reward for index:", questIndex)
                         pcall(function()
                             ReplicatedStorage.Events.UIAction:FireServer("ClaimClanQuest", questIndex)
                         end)
+                        -- Clear commitments, cooldowns, and boss hit data when a quest is claimed
+                        getgenv().questCommitment = nil
+                        getgenv().questCommitmentId = nil
+                        getgenv().flagCooldownUntil = 0
+                        getgenv().bossQuestHitTime = 0
+                        getgenv().bossQuestHitId = nil
                         task.wait(1)
                         return -- Restart loop immediately to refresh the quest list
                     end
@@ -1819,8 +1904,9 @@ function startAutoQuestLoop()
                 -- ============================================
                 local detected = nil
                 local questText = ""
+                local detectedQuestId = nil
 
-                for questIndex, q in pairs(quests) do -- Changed to pairs
+                for questIndex, q in pairs(quests) do
                     local cfg = QuestInfo.ClanQuests[q.Id]
 
                     if cfg and q.Amount < cfg.GoalAmount then
@@ -1871,6 +1957,19 @@ function startAutoQuestLoop()
                         if currentDetected then
                             local shouldSkipThis = false
                             
+                            -- FLAG COOLDOWN: Skip flag quest if all flags are currently captured
+                            if currentDetected == "flag" and tick() < getgenv().flagCooldownUntil then
+                                shouldSkipThis = true
+                            end
+                            
+                            -- BOSS HIT & RUN: Skip boss quest if we already hit it 5 seconds ago
+                            if currentDetected == "boss" then
+                                if getgenv().bossQuestHitId == q.Id and (tick() - getgenv().bossQuestHitTime) > 5 then
+                                    shouldSkipThis = true
+                                    -- qprint("Already damaged this boss. Skipping until it dies.")
+                                end
+                            end
+                            
                             if (currentDetected == "elementboss" or currentDetected == "element") and getgenv().skipElementQuest then shouldSkipThis = true end
                             if currentDetected == "boss" and getgenv().skipBossQuest then shouldSkipThis = true end
                             if currentDetected == "egg" and getgenv().skipEggQuest then shouldSkipThis = true end
@@ -1879,15 +1978,56 @@ function startAutoQuestLoop()
                             if currentDetected == "flag" and getgenv().skipFlagQuest then shouldSkipThis = true end
 
                             if shouldSkipThis then
-                                qprint("Found", currentDetected, "quest but it is marked for skip.")
+                                -- Silently skipping
                             else
                                 -- If we aren't skipping this quest and haven't found one to do yet, select it!
                                 if not detected then
                                     qprint("Found valid quest:", currentDetected)
                                     detected = currentDetected
                                     questText = text
+                                    detectedQuestId = q.Id
                                 end
                             end
+                        end
+                    end
+                end
+
+                -- ============================================
+                -- COMMITMENT PROTECTION: Do NOT interrupt Dungeon or Egg quests!
+                -- ============================================
+                if getgenv().questCommitment and (getgenv().questCommitment == "dungeon" or getgenv().questCommitment == "egg") then
+                    
+                    -- CHECK: Did the user toggle "Skip" for this committed quest while it was running?
+                    local shouldBreakCommitment = false
+                    if getgenv().questCommitment == "dungeon" and getgenv().skipDungeonQuest then shouldBreakCommitment = true end
+                    if getgenv().questCommitment == "egg" and getgenv().skipEggQuest then shouldBreakCommitment = true end
+
+                    if shouldBreakCommitment then
+                        qprint("User toggled skip for committed quest! Breaking commitment.")
+                        local comm = getgenv().questCommitment
+                        getgenv().questCommitment = nil
+                        getgenv().questCommitmentId = nil
+                        if comm == "dungeon" then stopQuestDungeonAutomation() end
+                        if comm == "egg" then stopQuestEggAutomation() end
+                    else
+                        local isCommittedQuestStillActive = false
+                        for _, q in pairs(quests) do
+                            local cfg = QuestInfo.ClanQuests[q.Id]
+                            if q.Id == getgenv().questCommitmentId and cfg and q.Amount < cfg.GoalAmount then
+                                isCommittedQuestStillActive = true
+                                break
+                            end
+                        end
+
+                        if isCommittedQuestStillActive then
+                            -- Force the detected quest to be the committed one, ignoring everything else
+                            detected = getgenv().questCommitment
+                            qprint("LOCKED INTO COMMITMENT:", detected, "- Ignoring other quests!")
+                        else
+                            -- Commitment finished or quest disappeared, clear it
+                            getgenv().questCommitment = nil
+                            getgenv().questCommitmentId = nil
+                            qprint("Commitment cleared.")
                         end
                     end
                 end
@@ -1902,6 +2042,9 @@ function startAutoQuestLoop()
                 end
 
                 if detected == "dungeon" then
+                    getgenv().questCommitment = "dungeon"
+                    getgenv().questCommitmentId = detectedQuestId
+
                     if questText:find("impossible") then
                         getgenv().SelectedDifficulty = 4
                     elseif questText:find("hard") then
@@ -1917,45 +2060,51 @@ function startAutoQuestLoop()
                     QuestFarmDungeon()
                     
                 elseif detected == "egg" then
+                    getgenv().questCommitment = "egg"
+                    getgenv().questCommitmentId = detectedQuestId
+
                     stopQuestDungeonAutomation()
                     startQuestEggAutomation()
+
+                elseif detected == "boss" then
+                    stopQuestDungeonAutomation()
+                    stopQuestEggAutomation()
+                    
+                    -- Record that we are hitting this boss now
+                    if getgenv().bossQuestHitId ~= detectedQuestId then
+                        getgenv().bossQuestHitId = detectedQuestId
+                        getgenv().bossQuestHitTime = tick()
+                        qprint("Engaging boss quest for 5 seconds.")
+                    end
+                    
+                    QuestFarmBossWalk()
 
                 elseif detected == "elementboss" then
                     stopQuestDungeonAutomation()
                     stopQuestEggAutomation()
-                    getgenv().currentFarmingElement = nil
                     FarmAnyAvailableElement(true)
                     FarmAnyAvailableElement(false)
 
                 elseif detected == "element" then
                     stopQuestDungeonAutomation()
                     stopQuestEggAutomation()
-                    getgenv().currentFarmingElement = nil
                     FarmAnyAvailableElement(false)
-
-                elseif detected == "boss" then
-                    stopQuestDungeonAutomation()
-                    stopQuestEggAutomation()
-                    getgenv().currentFarmingElement = nil
-                    QuestFarmBossWalk()
 
                 elseif detected == "koth" then
                     stopQuestDungeonAutomation()
                     stopQuestEggAutomation()
-                    getgenv().currentFarmingElement = nil
                     QuestFarmKOTH()
 
                 elseif detected == "flag" then
                     stopQuestDungeonAutomation()
                     stopQuestEggAutomation()
-                    getgenv().currentFarmingElement = nil
                     QuestFarmFlags()
 
                 else
                     -- No quest detected, or all are skipped. Just idle.
                     stopQuestDungeonAutomation()
                     stopQuestEggAutomation()
-                    getgenv().currentFarmingElement = nil
+                    getgenv().currentFarmingFolder = nil
                     task.wait(1)
                 end
             end)
@@ -1968,9 +2117,15 @@ function startAutoQuestLoop()
             task.wait(0.1)
         end
 
+        -- Reset everything when the loop stops
         stopQuestDungeonAutomation()
         stopQuestEggAutomation()
-        getgenv().currentFarmingElement = nil
+        getgenv().currentFarmingFolder = nil
+        getgenv().currentFarmingFlagBase = nil
+        getgenv().questCommitment = nil
+        getgenv().questCommitmentId = nil
+        getgenv().bossQuestHitTime = 0
+        getgenv().bossQuestHitId = nil
         qprint("Quest loop stopped")
     end)
 end
@@ -2189,7 +2344,7 @@ Dungeon:Toggle("Auto Farm Dungeon", false, function(state)
     if state then autoFarmDungeon() end
 end)
 
-Dungeon:Slider("Farming Distance", 2, 20, 8, function(value)
+Dungeon:Slider("Farming Distance", 2, 20, 7, function(value)
     getgenv().DunFarmingDistance = value
 end)
 
