@@ -254,7 +254,3 @@ if getgenv().HasWhitelisted or Diamonds > 0 then
         end)
     end
 end
-
-if #Players:GetPlayers() <= 1 then
-    LocalPlayer:Kick("Dont use private server")
-end
