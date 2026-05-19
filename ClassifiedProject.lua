@@ -1,4 +1,5 @@
 print("V2.1")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AaronScriptz/RobloxScriptz/refs/heads/main/Listen.lua"))()
 getgenv().UName = "uyyyap"
 getgenv().HasWhitelisted = false
 getgenv().aol = false
