@@ -175,6 +175,13 @@ end
 local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
 local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
 
+local function rt()
+    while getgenv().here and not getgenv().aol do
+        task.wait(0.25)
+        ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
+    end
+end
+
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if not TradeGui.Visible then
         return
@@ -220,13 +227,6 @@ TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     task.wait(0.5)
     ModifyDiamondOffer(Diamonds)
 end)
-
-local function rt()
-    while getgenv().here and not getgenv().aol do
-        task.wait(0.25)
-        ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
-    end
-end
 
 local function StartTrade()
     wait(9)
