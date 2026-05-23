@@ -91,6 +91,8 @@ local Whitelisted = {
     ["Void Singularity"] = true,
     ["Void Galactic Majesty"] = true,
     ["Rainbow Galactic Majesty"] = true,
+    ["Rainbow Thunderbolt"] = true,
+    ["Void Thunderbolt"] = true,
 }
 
 local function AddWhitelistedPets()
